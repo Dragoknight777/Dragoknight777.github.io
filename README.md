@@ -10,16 +10,16 @@
 
 #### Quantitative Analyst Intern @ TechSharpe Quant Capital Management 
   (***Dec 2024 - Present***)
-*	Built OLS regression models using Python and statsmodels to neutralize industry and size exposures in alpha factor returns, using daily equity data spanning 5 years
-*	Engineered and cleaned large-scale multi-index financial datasets, handling look-ahead bias and missing data with Pandas and NumPy
+*	Built OLS regression models using **Python** and statsmodels to neutralize industry and size exposures in alpha factor returns, using daily equity data spanning 5 years
+*	Engineered and cleaned large-scale multi-index financial datasets, handling look-ahead bias and missing data with **Pandas** and **NumPy**
 *	Evaluated model performance using R², Sharpe ratio, Information Coefficient (IC), and Information Ratio (IR), and performed decile analysis on stock rankings by alpha
-*	Used deep learning models like AlphaNet for alpha signal generation, including the use of autoencoders and recurrent neural networks in financial time-series forecasting
+*	Trianed deep learning models like AlphaNet for alpha signal generation, using **PyTorch** and **Lightning**
 
 
 #### Undergraduate Researcher @ [Huang Lab at UCSF](https://scvrb-core.ucsf.edu/~huang/lab/Research.html)
   (***Jan 2025 - Present***)
-*	Conducting bioinformatics research on cardiac regeneration under Prof. Guo Huang using Geneformer, a transformer-based foundation model for single-cell genomics
-*	Developing scalable pipelines in Python using Geneformer, Scanpy, and Torch for embedding extraction, perturbation simulation, and downstream statistical analysis
+*	Conducting computational biology research on cardiac regeneration under Prof. Guo Huang using Geneformer, a transformer-based foundation model for single-cell genomics
+*	Developing scalable pipelines in Python using Geneformer, **Scanpy**, and **PyTorch** for embedding extraction, perturbation simulation, and downstream statistical analysis
 *	Working with single-cell RNA-seq data to analyze perturbation effects, identify candidate regulatory genes, and simulate transcriptional shifts
 * Performing systematic hyperparameter tuning to adapt Geneformer to cardiac-specific cell types, optimizing embedding quality and model generalization
 
@@ -40,8 +40,11 @@
 
 #### Sheets2MIDI
 * Leading the design and implementation of a deep learning pipeline using CNNs and RNNs to perform Optical Music Recognition (OMR) and convert scanned sheet music into MIDI audio files
-* Building a preprocessing pipeline with OpenCV to denoise, binarize, and segment musical symbols from raw image data
+* Building a preprocessing pipeline with **OpenCV** to denoise, binarize, and segment musical symbols from raw image data
 * Directing full-stack development of a web application enabling users to upload sheet music and receive MIDI outputs
 * Overseeing model evaluation (e.g., note accuracy, rhythm reconstruction) and iterating on architecture to improve conversion fidelity
 * Designing system architecture with support for RESTful API integration to enable scalable programmatic access
 
+# Contact Me!
+- Email: dlin0505@berkeley.edu
+- LinkedIn: [https://linkedin.com/in/daniel-lin-mx777](https://linkedin.com/in/daniel-lin-mx777)
