@@ -8,14 +8,16 @@
 
 ## Work Experience
 
-#### Quantitative Analyst Intern @ TechSharpe Quant Capital Management (***Dec 2024 - Present***)
+#### Quantitative Analyst Intern @ TechSharpe Quant Capital Management 
+  (***Dec 2024 - Present***)
 *	Built OLS regression models using Python and statsmodels to neutralize industry and size exposures in alpha factor returns, using daily equity data spanning 5 years
 *	Engineered and cleaned large-scale multi-index financial datasets, handling look-ahead bias and missing data with Pandas and NumPy
 *	Evaluated model performance using R², Sharpe ratio, Information Coefficient (IC), and Information Ratio (IR), and performed decile analysis on stock rankings by alpha
 *	Used deep learning models like AlphaNet for alpha signal generation, including the use of autoencoders and recurrent neural networks in financial time-series forecasting
 
 
-#### Undergraduate Researcher @ [Huang Lab at UCSF](https://scvrb-core.ucsf.edu/~huang/lab/Research.html) (***Jan 2025 - Present***)
+#### Undergraduate Researcher @ [Huang Lab at UCSF](https://scvrb-core.ucsf.edu/~huang/lab/Research.html)
+  (***Jan 2025 - Present***)
 *	Conducting bioinformatics research on cardiac regeneration under Prof. Guo Huang using Geneformer, a transformer-based foundation model for single-cell genomics
 *	Developing scalable pipelines in Python using Geneformer, Scanpy, and Torch for embedding extraction, perturbation simulation, and downstream statistical analysis
 *	Working with single-cell RNA-seq data to analyze perturbation effects, identify candidate regulatory genes, and simulate transcriptional shifts
@@ -26,7 +28,7 @@
 
 #### Discovering Biomarkers for Breast Cancer Subtypes with Gene Expression Data using Machine Learning
 [Paper](https://drive.google.com/file/d/11jV82yGMEHr77B_zYCY7HzYi8-tEApct/view?usp=sharing)
-* Finalist and special award recipient at 2022 ISEF, and participant in the 2023 Science Talent Search.
+* **Finalist and special award recipient at 2022 ISEF**, and participant in the 2023 Science Talent Search.
 * Leading end-to-end ML research to identify diagnostic and prognostic biomarkers for breast cancer subtypes using RNA-seq gene expression datasets
 *	Applied Elastic Net Regression to select predictive gene features, iterating models over 500+ training rounds to isolate consistent subtype-specific gene markers
 *	Performed dimensionality reduction with PCA and LDA to visualize separability of cancer subtypes, confirming biological patterns in subtype aggressiveness
