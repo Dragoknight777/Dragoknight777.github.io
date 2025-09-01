@@ -1,0 +1,1 @@
+This is my various projects for Berkeley's CS180 Intro to Computer Vision class.
