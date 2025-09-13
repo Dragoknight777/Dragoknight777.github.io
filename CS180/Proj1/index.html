@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CS180 Project 1</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <h1>Project 1: Images of the Russian Empire</h1>
+      <p class="subtitle">Daniel Lin</p>
+    </header>
+
+    <main class="container">
+      <!-- Section 1: one paragraph + one row of 3 images -->
+      <section class="section">
+        <div class="card">
+          <h2>Part I — Single-Scale Alignment</h2>
+          <p>
+            For the small .jpg images, I used a single-scale moving alignment of the G 
+            and R channels to the B channel. I first cropped the borders of the images
+            by 15% on each side to remove any unwanted artifacts. Then, I computed the
+            optimal shifts for the G and R channels by searching within a [-15, 15]
+            pixel window in the x and y directions. I evaluated similarity on the 
+            overlap using Normalized Cross-Correlation (NCC), which is simply a dot 
+            product between two normalized vectors of the images. The best-scoring 
+            shift was recorded as the shift for that channel. Finally, I stacked the 
+            shifted channels to create the final color image. 
+          </p>
+        </div>
+
+        <div class="gallery gallery--one-row">
+          <figure class="tile">
+            <img src="images/out_cathedral.jpg" alt="Description of image 1" />
+            <figcaption>cathedral.jpg<br>dGreen = (5, 2), dRed = (12, 3)</figcaption>
+          </figure>
+          <figure class="tile">
+            <img src="images/out_monastery.jpg" alt="Description of image 2" />
+            <figcaption>monastery.jpg<br>dGreen = (-3, 2), dRed = (3, 2)</figcaption>
+          </figure>
+          <figure class="tile">
+            <img src="images/out_tobolsk.jpg" alt="Description of image 3" />
+            <figcaption>tobolsk.jpg<br>dGreen = (3, 3), dRed = (6, 3)</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- Section 2: same paragraph + ~5 rows of 3 images -->
+      <section class="section">
+        <div class="card">
+          <h2>Part II — Image Pyramid</h2>
+          <p>
+            For the large .tif images, I implemented a coarse-to-fine image pyramid 
+            to keep alignment fast and robust. I created the pyramid by repeatedly 
+            downscaling each channel by a factor of 2 for 5 iterations, with 
+            anti-aliasing on. Then, I aligned the channels from the coarsest level
+            to the finest. At the coarsest level, I used the same single-scale 
+            alignment method as in Part I, but for the finer levels I first applied
+            the total computed shift (doubled at each level) and then searched for 
+            the optimal shift again, adding that to the previous shift. This allows 
+            the algorithm to only make small adjustments at each level, which is 
+            much faster. Finally, I stacked the shifted channels to create the 
+            final color image.
+
+            The only image this method failed on is the "emir.tif", which I would 
+            guess failed due to its differing brightness levels between channels.
+          </p>
+        </div>
+
+        <div class="gallery">
+          <!-- Row 1 -->
+          <figure class="tile">
+            <img src="images/out_harvesters.jpg" alt="Description of image A1" />
+            <figcaption>harvesters.jpg<br>dGreen = (60, 17), dRed = (124, 14)</figcaption>
+          </figure>
+          <figure class="tile">
+            <img src="images/out_icon.jpg" alt="Description of image A2" />
+            <figcaption>icon.jpg<br>dGreen = (41, 17), dRed = (90, 23)</figcaption>
+          </figure>
+          <figure class="tile">
+            <img src="images/out_italil.jpg" alt="Description of image A3" />
+            <figcaption>italil.jpg<br>dGreen = (38, 21), dRed = (77, 35)</figcaption>
+          </figure>
+
+          <!-- Row 2 -->
+          <figure class="tile">
+            <img src="images/out_lastochikino.jpg" alt="Description of image B1" />
+            <figcaption>lastochikino.jpg<br>dGreen = (-2, -2), dRed = (75, -8)</figcaption>
+          </figure>
+          <figure class="tile">
+            <img src="images/out_lugano.jpg" alt="Description of image B2" />
+            <figcaption>lugano.jpg<br>dGreen = (41, -16), dRed = (93, -29)</figcaption>
+          </figure>
+          <figure class="tile">
+            <img src="images/out_melons.jpg" alt="Description of image B3" />
+            <figcaption>melons.jpg<br>dGreen = (82, 11), dRed = (178, 14)</figcaption>
+          </figure>
+
+          <!-- Row 3 -->
+          <figure class="tile">
+            <img src="images/out_church.jpg" alt="Description of image C1" />
+            <figcaption>church.jpg<br>dGreen = (25, 4), dRed = (58, -4)</figcaption>
+          </figure>
+          <figure class="tile">
+            <img src="images/out_self_portrait.jpg" alt="Description of image C2" />
+            <figcaption>self_portrait.jpg<br>dGreen = (79, 29), dRed = (176, 37)</figcaption>
+          </figure>
+          <figure class="tile">
+            <img src="images/out_siren.jpg" alt="Description of image C3" />
+            <figcaption>siren.jpg<br>dGreen = (50, -6), dRed = (96, -25)</figcaption>
+          </figure>
+
+          <!-- Row 4 -->
+          <figure class="tile">
+            <img src="images/out_three_generations.jpg" alt="Description of image D1" />
+            <figcaption>three_generations.jpg<br>dGreen = (52, 14), dRed = (111, 11)</figcaption>
+          </figure>
+          <figure class="tile">
+            <img src="images/out_emir.jpg" alt="Description of image D2" />
+            <figcaption>emir.jpg<br>dGreen = (49, 24), dRed = (584, -415)<br>Note that this is certainly<br>not the correct Red shift.</figcaption>
+          </figure>
+          <!-- <figure class="tile">
+            <img src="images/out_cathedral.jpg" alt="Description of image D3" />
+            <figcaption>Caption D3</figcaption>
+          </figure> -->
+          <!-- Duplicate more <figure> blocks as needed -->
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>&copy; <span id="year"></span> Daniel Lin</p>
+    </footer>
+
+    <script>
+      // tiny helper to keep the footer year current
+      document.getElementById("year").textContent = new Date().getFullYear();
+    </script>
+  </body>
+</html>
