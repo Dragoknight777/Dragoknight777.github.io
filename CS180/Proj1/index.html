@@ -36,8 +36,8 @@
         <div class="card">
           <h2>Part I — Single-Scale Alignment</h2>
           <p>
-            For the small .jpg images, I used a single-scale moving alignment of the G 
-            and R channels to the B channel. I first cropped the borders of the images
+            For the small .jpg images, I used a single-scale moving alignment of the green (G) 
+            and red (R) channels to the blue (B) channel. I first cropped the borders of the images
             by 15% on each side to remove any unwanted artifacts. Then, I computed the
             optimal shifts for the G and R channels by searching within a [-15, 15]
             pixel window in the x and y directions. I evaluated similarity on the 
@@ -155,13 +155,13 @@
       </section>
     </main>
 
-    <footer class="site-footer">
+    <!-- <footer class="site-footer">
       <p>&copy; <span id="year"></span> Daniel Lin</p>
     </footer>
 
     <script>
       // tiny helper to keep the footer year current
       document.getElementById("year").textContent = new Date().getFullYear();
-    </script>
+    </script> -->
   </body>
 </html>
