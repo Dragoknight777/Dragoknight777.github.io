@@ -10,23 +10,25 @@
     <header>
         <h1>CS180 Project 2: Image Processing and Filtering</h1>
         <p class="author">by Daniel Lin</p>
+        <div class="header-image">
+            <img src="./images/outputs2.4/EfrosWorship.jpg" alt="All Praise Prof. Efros" class="praise-image">
+        </div>
     </header>
 
     <main>
         <section id="introduction">
             <h2>Introduction</h2>
-            <p>This project explores fundamental concepts in computer vision and image processing, implementing various filtering techniques and their applications. The work is divided into two main parts: basic image filtering operations and their practical applications in image manipulation.</p>
-            
-            <p>In Part 1, we investigate the implementation of convolution operations, edge detection techniques, and various filtering methods. We compare different approaches to image convolution and analyze their effects on image processing tasks. Part 2 demonstrates practical applications of these concepts, including image sharpening using unsharp masking, creating hybrid images through frequency manipulation, and implementing advanced blending techniques using Gaussian and Laplacian pyramids.</p>
-            
-            <p>Throughout this project, we'll see how mathematical concepts in signal processing translate into powerful tools for image manipulation and creative visual effects.</p>
+            <p>For this project I explored some core ideas in computational photography and image processing. I started by building 2-D convolution from scratch to understand how filtering works, 
+                then used finite difference filters and Gaussian smoothing to detect edges and see how blurring cuts down noise. 
+                After that I moved on to more creative effects: I sharpened a color photo with unsharp masking, 
+                made hybrid images that look like one subject up close and another from far away, and used Gaussian and Laplacian stacks for multiresolution blending to merge two pictures seamlessly./p>
         </section>
 
         <section id="part1">
-            <h2>Part 1: Filters and Edges</h2>
+            <h2>Part 1: Fun with Filters</h2>
             
             <div class="subsection">
-                <h3>1.1 Convolution Implementation</h3>
+                <h3>1.1 Convolution from Scratch!</h3>
                 <p>To explore the mechanics of 2-D convolution, I implemented two pure-NumPy routines:</p>
                 <div class="implementation-list">
                     <ul>
@@ -61,8 +63,15 @@
             </div>
 
             <div class="subsection">
-                <h3>1.2 Derivatives and Edge Detection</h3>
-                <p>Edge detection is a fundamental operation in computer vision that helps identify boundaries and features in images. By computing image derivatives in different directions, we can detect rapid intensity changes that often correspond to meaningful image features. Here, we examine both raw derivatives and their binarized versions to highlight edge structures.</p>
+                <h3>1.2 Finite Difference Operator</h3>
+                <p>For Part 1.2 I implemented a finite difference operator to detect edges in the classic cameraman image. 
+                    After converting the image to grayscale and scaling pixel values to the [0, 1] range, I convolved it with two simple derivative filters: 
+                    D_x=[−1,0,1] to capture horizontal intensity changes (vertical edges) and D_y=[−1;0;1] to capture vertical intensity changes (horizontal edges). 
+                    I used scipy.signal.convolve2d in “same” mode with zero padding so the output size matched the input. The horizontal and vertical derivative responses were then 
+                    combined to compute the gradient magnitude y=[−1;0;1] to capture vertical intensity changes (horizontal edges). I used scipy.signal.convolve2d in 
+                    “same” mode with zero padding so the output size matched the input. The horizontal and vertical derivative responses were then combined to compute the gradient magnitude, 
+                    giving a single image that represents edge strength regardless of direction. Finally, I produced binary edge maps by thresholding the absolute derivative responses and 
+                    the gradient magnitude to remove noise and highlight only the most significant edges</p>
                 
                 <div class="derivatives-table">
                     <table>
@@ -114,7 +123,10 @@
 
             <div class="subsection">
                 <h3>1.3 Gaussian and DoG Filters</h3>
-                <p>The Difference of Gaussians (DoG) filter is created by subtracting two Gaussian-blurred versions of an image with different standard deviations. This operation effectively creates a band-pass filter that can be used for edge detection and image enhancement. When binarized, the DoG filter reveals prominent edges while suppressing noise.</p>
+                <p>For Part 1.3 I applied Gaussian smoothing before computing derivatives to reduce noise in the edge detection process. 
+                    The grayscale cameraman image was first blurred with a 9×9 Gaussian kernel (σ=1.6), then convolved with the same finite difference filters D_x and D_y as in Part 1.2. 
+                    From these smoothed derivatives I computed the gradient magnitude and created binary edge maps using lower thresholds. 
+                    The Gaussian pre–filtering suppresses high-frequency noise, producing cleaner, more continuous edges compared to the unsmoothed finite difference results</p>
                 
                 <div class="comparison-grid">
                     <figure>
@@ -130,11 +142,15 @@
         </section>
 
         <section id="part2">
-            <h2>Part 2: Applications</h2>
+            <h2>Part 2: Fun with Frequencies!</h2>
 
             <div class="subsection">
-                <h3>2.1 Unsharp Mask Filter</h3>
-                <p>Demonstration of unsharp masking and its relationship with blur filters and high frequencies.</p>
+                <h3>2.1 Image Sharpening</h3>
+                <p>To emphasize high-frequency details, I implemented an unsharp mask in full color. First, the input image (the Taj Mahal) is blurred by convolving each RGB channel with a normalized 2-D Gaussian kernel
+                    (ksize = 9, sigma = 1.6). This produces a smooth low-frequency version of the scene. Subtracting the blurred image from the original isolates the high-frequency component—fine details and edges. 
+                    The sharpened result is then obtained by adding a scaled version of this high-frequency signal back to the original image: I_sharp = I + α * (I - I_blur), where α controls the sharpening amount.
+                    I experimented with α values ranging from 0.5 to 5 to show how increasing the weight of the high frequencies gradually enhances edge contrast and texture.
+                </p>
                 <div class="image-grid">
                     <figure>
                         <img src="./images/taj.jpg" alt="Blurry Taj">
@@ -174,8 +190,12 @@
 
             <div class="subsection">
                 <h3>2.2 Hybrid Images</h3>
-                <p>Hybrid images combine the high-frequency components of one image with the low-frequency components of another to create a fascinating perceptual effect. These images appear different when viewed from different distances, demonstrating how our visual system processes spatial frequencies. By applying Fourier transforms and frequency-domain filtering, we can precisely control which components of each image to preserve.</p>
-                
+                <p> A hybrid image combines the low-frequency content of one image with the high-frequency content of another so that the viewer perceives different subjects depending on viewing distance. 
+                    First, each image pair is manually aligned so key features (for example, eyes or facial landmarks) overlap. Once aligned, the “foreground” image is high-pass filtered: 
+                    it is blurred with a Gaussian kernel of standard deviation σ front and the blur is subtracted from the original to isolate high frequencies. 
+                    The “background” image is low-pass filtered with a Gaussian of standard deviation σ back to retain only coarse structure. Adding these two frequency bands yields the final hybrid image. <br>
+                To visualize frequency separation, the log-magnitude of the 2-D Fourier transform is computed for the aligned images, the filtered results, and the final hybrid image.</p>
+
                 <div class="hybrid-process">
                     <h4>Derek + Nutmeg Hybrid Process:</h4>
                     <div class="process-table">
@@ -242,6 +262,9 @@
 
             <div class="subsection">
                 <h3>2.3 Gaussian and Laplacian Stacks</h3>
+                <p>To explore multiresolution analysis, I generated Gaussian and Laplacian stacks of two images—an orange and an apple. A Gaussian stack is built by repeatedly blurring 
+                    the image with a 2-D Gaussian filter (σ=2.0 per level) to progressively remove high-frequency detail. The Laplacian stack captures the band-pass information at each level 
+                    by subtracting successive Gaussian levels: L_i​=G_i​−G_(i+1​), L_(N−1​)=G_(N−1​). These stacks reveal image content at different spatial frequencies and form the basis for multiresolution blending</p>
                 <div class="stacks">
                     <h4>Gaussian and Laplacian Stacks Comparison:</h4>
                     <div class="stack-table">
@@ -347,7 +370,12 @@
             </div>
 
             <div class="subsection">
-                <h3>2.4 Custom Blended Images</h3>
+                <h3>2.4 Custom Multiresolution Blended Images</h3>
+                <p>Using the Gaussian and Laplacian stack blending technique, I created two custom blended images. The first blend combines a worship image with a profile picture of Prof. Efros, 
+                    and the second blend merges images of Prof. Joshua Grossman and Prof. Jeremy Sanchez to create "Prof. Joshua Sanchez." 
+                    For each blend, I manually aligned the source images to ensure key features overlapped appropriately. I then created a binary mask to define the blending region, 
+                    where white areas correspond to the first image and black areas to the second. Using Gaussian and Laplacian stacks, I blended the images seamlessly across multiple frequency bands, 
+                    producing visually coherent results that combine elements from both source images.</p>
                 <div class="blend-process">
                     <figure>
                         <img src="./images/worship.jpg" alt="Worship Image">
@@ -386,8 +414,8 @@
                     </figure>
                     <div class="operator">=</div>
                     <figure>
-                        <img src="./images/outputs2.4/JeremyGrossman.jpg" alt="Jeremy Grossman Blend">
-                        <figcaption>Prof. Jeremy Grossman</figcaption>
+                        <img src="./images/outputs2.4/JeremyGrossman.jpg" alt="Joshua Sanchez Blend">
+                        <figcaption>Prof. Joshua Sanchez</figcaption>
                     </figure>
                 </div>
             </div>
