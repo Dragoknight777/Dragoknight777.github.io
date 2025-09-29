@@ -9,33 +9,60 @@
 <body>
     <header>
         <h1>CS180 Project 2: Image Processing and Filtering</h1>
+        <p class="author">by Daniel Lin</p>
     </header>
 
     <main>
+        <section id="introduction">
+            <h2>Introduction</h2>
+            <p>This project explores fundamental concepts in computer vision and image processing, implementing various filtering techniques and their applications. The work is divided into two main parts: basic image filtering operations and their practical applications in image manipulation.</p>
+            
+            <p>In Part 1, we investigate the implementation of convolution operations, edge detection techniques, and various filtering methods. We compare different approaches to image convolution and analyze their effects on image processing tasks. Part 2 demonstrates practical applications of these concepts, including image sharpening using unsharp masking, creating hybrid images through frequency manipulation, and implementing advanced blending techniques using Gaussian and Laplacian pyramids.</p>
+            
+            <p>Throughout this project, we'll see how mathematical concepts in signal processing translate into powerful tools for image manipulation and creative visual effects.</p>
+        </section>
+
         <section id="part1">
             <h2>Part 1: Filters and Edges</h2>
             
             <div class="subsection">
                 <h3>1.1 Convolution Implementation</h3>
-                <p>Implementation comparison between numpy-only convolution and scipy.signal.convolve2d, analyzing runtime differences and boundary handling methods.</p>
+                <p>To explore the mechanics of 2-D convolution, I implemented two pure-NumPy routines:</p>
+                <div class="implementation-list">
+                    <ul>
+                        <li>A four-loop version that explicitly iterates over every pixel and kernel entry</li>
+                        <li>A more efficient two-loop version that pads the image once and then takes patch-wise dot products</li>
+                    </ul>
+                </div>
+                <p>Both implementations flip the kernel K[ : : -1, : : -1] to perform true convolution and use zero padding to maintain output size equal to input size</p>
+                <p>For comparison, I also applied SciPy's <code>signal.convolve2d</code> with <code>mode='same'</code> and <code>boundary='fill'</code>.</p>
+                <p>Using these methods, I convolved a grayscale self-portrait with:</p>
+                <div class="implementation-list">
+                    <ul>
+                        <li>Box filter (9×9): B = ones(9,9) / 81</li>
+                        <li>Finite-difference filters: D<sub>x</sub> = [−1, 0, 1], D<sub>y</sub> = [−1, 0, 1]<sup>T</sup></li>
+                    </ul>
+                </div>
+
+                 <div class="image-grid">
+                    <figure>
+                        <img src="./images/outputs1/Daniel_Dx.jpg" alt="X Derivative">
+                        <figcaption>Selfie - X Derivative</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./images/outputs1/Daniel_Dy.jpg" alt="Y Derivative">
+                        <figcaption>Selfie - Y Derivative</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./images/outputs1/Daniel_Gradient.jpg" alt="Gradient Magnitude">
+                        <figcaption>Selfie - Gradient Magnitude</figcaption>
+                    </figure>
+                </div>
             </div>
 
             <div class="subsection">
                 <h3>1.2 Derivatives and Edge Detection</h3>
-                <div class="image-grid">
-                    <figure>
-                        <img src="./images/outputs1/Daniel_Dx.jpg" alt="X Derivative">
-                        <figcaption>X Derivative</figcaption>
-                    </figure>
-                    <figure>
-                        <img src="./images/outputs1/Daniel_Dy.jpg" alt="Y Derivative">
-                        <figcaption>Y Derivative</figcaption>
-                    </figure>
-                    <figure>
-                        <img src="./images/outputs1/Daniel_Gradient.jpg" alt="Gradient Magnitude">
-                        <figcaption>Gradient Magnitude</figcaption>
-                    </figure>
-                </div>
+               
             </div>
 
             <div class="subsection">
@@ -65,8 +92,8 @@
                 <p>Demonstration of unsharp masking and its relationship with blur filters and high frequencies.</p>
                 <div class="image-grid">
                     <figure>
-                        <img src="./images/outputs2.1/taj_blur.jpg" alt="Blurred Taj">
-                        <figcaption>Blurred Taj Mahal</figcaption>
+                        <img src="./images/taj.jpg" alt="Blurry Taj">
+                        <figcaption>Blurry Taj Mahal</figcaption>
                     </figure>
                     <figure>
                         <img src="./images/outputs2.1/taj_high_color_alpha.jpg" alt="High Frequency">
@@ -75,10 +102,14 @@
                 </div>
                 <div class="alpha-variations">
                     <h4>Sharpening Amount Variations:</h4>
-                    <div class="image-grid">
+                    <div class="alpha-grid">
                         <figure>
                             <img src="./images/outputs2.1/taj_sharp_color_alpha_0.50.jpg" alt="Alpha 0.5">
                             <figcaption>α = 0.50</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="./images/outputs2.1/taj_sharp_color_alpha_1.00.jpg" alt="Alpha 1.0">
+                            <figcaption>α = 1.00</figcaption>
                         </figure>
                         <figure>
                             <img src="./images/outputs2.1/taj_sharp_color_alpha_1.50.jpg" alt="Alpha 1.5">
@@ -87,6 +118,10 @@
                         <figure>
                             <img src="./images/outputs2.1/taj_sharp_color_alpha_3.00.jpg" alt="Alpha 3.0">
                             <figcaption>α = 3.00</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="./images/outputs2.1/taj_sharp_color_alpha_5.00.jpg" alt="Alpha 5.0">
+                            <figcaption>α = 5.00</figcaption>
                         </figure>
                     </div>
                 </div>
@@ -129,33 +164,104 @@
             <div class="subsection">
                 <h3>2.3 Gaussian and Laplacian Stacks</h3>
                 <div class="stacks">
-                    <h4>Apple Image Stacks:</h4>
-                    <div class="image-grid">
-                        <figure>
-                            <img src="./images/outputs2.3/G0_apple_.jpg" alt="G0 Apple">
-                            <figcaption>G0 Apple</figcaption>
-                        </figure>
-                        <figure>
-                            <img src="./images/outputs2.3/G2_apple_.jpg" alt="G2 Apple">
-                            <figcaption>G2 Apple</figcaption>
-                        </figure>
-                        <figure>
-                            <img src="./images/outputs2.3/G4_apple_.jpg" alt="G4 Apple">
-                            <figcaption>G4 Apple</figcaption>
-                        </figure>
+                    <h4>Gaussian and Laplacian Stacks Comparison:</h4>
+                    <div class="stack-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Gaussian Apple</th>
+                                    <th>Gaussian Orange</th>
+                                    <th>Laplacian Apple</th>
+                                    <th>Laplacian Orange</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <figure>
+                                            <img src="./images/outputs2.3/G0_apple_.jpg" alt="G0 Apple">
+                                            <figcaption>Level 0</figcaption>
+                                        </figure>
+                                    </td>
+                                    <td>
+                                        <figure>
+                                            <img src="./images/outputs2.3/G0_orange_.jpg" alt="G0 Orange">
+                                            <figcaption>Level 0</figcaption>
+                                        </figure>
+                                    </td>
+                                    <td>
+                                        <figure>
+                                            <img src="./images/outputs2.3/L0_apple_.jpg" alt="L0 Apple">
+                                            <figcaption>Level 0</figcaption>
+                                        </figure>
+                                    </td>
+                                    <td>
+                                        <figure>
+                                            <img src="./images/outputs2.3/L0_orange_.jpg" alt="L0 Orange">
+                                            <figcaption>Level 0</figcaption>
+                                        </figure>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <figure>
+                                            <img src="./images/outputs2.3/G2_apple_.jpg" alt="G2 Apple">
+                                            <figcaption>Level 2</figcaption>
+                                        </figure>
+                                    </td>
+                                    <td>
+                                        <figure>
+                                            <img src="./images/outputs2.3/G2_orange_.jpg" alt="G2 Orange">
+                                            <figcaption>Level 2</figcaption>
+                                        </figure>
+                                    </td>
+                                    <td>
+                                        <figure>
+                                            <img src="./images/outputs2.3/L2_apple_.jpg" alt="L2 Apple">
+                                            <figcaption>Level 2</figcaption>
+                                        </figure>
+                                    </td>
+                                    <td>
+                                        <figure>
+                                            <img src="./images/outputs2.3/L2_orange_.jpg" alt="L2 Orange">
+                                            <figcaption>Level 2</figcaption>
+                                        </figure>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <figure>
+                                            <img src="./images/outputs2.3/G4_apple_.jpg" alt="G4 Apple">
+                                            <figcaption>Level 4</figcaption>
+                                        </figure>
+                                    </td>
+                                    <td>
+                                        <figure>
+                                            <img src="./images/outputs2.3/G4_orange_.jpg" alt="G4 Orange">
+                                            <figcaption>Level 4</figcaption>
+                                        </figure>
+                                    </td>
+                                    <td>
+                                        <figure>
+                                            <img src="./images/outputs2.3/L4_apple_.jpg" alt="L4 Apple">
+                                            <figcaption>Level 4</figcaption>
+                                        </figure>
+                                    </td>
+                                    <td>
+                                        <figure>
+                                            <img src="./images/outputs2.3/L4_orange_.jpg" alt="L4 Orange">
+                                            <figcaption>Level 4</figcaption>
+                                        </figure>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="image-grid">
+                    <div class="stack-result">
+                        <h4>Final Blended Result:</h4>
                         <figure>
-                            <img src="./images/outputs2.3/L0_apple_.jpg" alt="L0 Apple">
-                            <figcaption>L0 Apple</figcaption>
-                        </figure>
-                        <figure>
-                            <img src="./images/outputs2.3/L2_apple_.jpg" alt="L2 Apple">
-                            <figcaption>L2 Apple</figcaption>
-                        </figure>
-                        <figure>
-                            <img src="./images/outputs2.3/L4_apple_.jpg" alt="L4 Apple">
-                            <figcaption>L4 Apple</figcaption>
+                            <img src="./images/outputs2.4/oraple.jpg" alt="Orange-Apple Blend">
+                            <figcaption>Orange-Apple Blend using Laplacian Stack Blending</figcaption>
                         </figure>
                     </div>
                 </div>
@@ -163,14 +269,46 @@
 
             <div class="subsection">
                 <h3>2.4 Custom Blended Images</h3>
-                <div class="image-grid">
+                <div class="blend-process">
+                    <figure>
+                        <img src="./images/worship.jpg" alt="Worship Image">
+                        <figcaption>Worship</figcaption>
+                    </figure>
+                    <div class="operator">+</div>
+                    <figure>
+                        <img src="./images/EfrosPositioned.jpg" alt="Efros Image">
+                        <figcaption>Prof. Efros</figcaption>
+                    </figure>
+                    <div class="operator">×</div>
+                    <figure>
+                        <img src="./images/EfrosMask.jpg" alt="Mask Image">
+                        <figcaption>Mask</figcaption>
+                    </figure>
+                    <div class="operator">=</div>
                     <figure>
                         <img src="./images/outputs2.4/EfrosWorship.jpg" alt="Efros-Worship Blend">
-                        <figcaption>Efros-Worship Blend</figcaption>
+                        <figcaption>All Praise Prof. Efros</figcaption>
                     </figure>
+                </div>
+                <div class="blend-process">
                     <figure>
-                        <img src="./images/outputs2.4/oraple.jpg" alt="Orange-Apple Blend">
-                        <figcaption>Orange-Apple Blend (Irregular Mask)</figcaption>
+                        <img src="./images/JoshuaGrossman.png" alt="Joshua Grossman Image">
+                        <figcaption>Prof. Joshua Grossman</figcaption>
+                    </figure>
+                    <div class="operator">+</div>
+                    <figure>
+                        <img src="./images/JeremySanchezEdited.jpg" alt="Jeremy Sanchez Image">
+                        <figcaption>Prof. Jeremy Sanchez</figcaption>
+                    </figure>
+                    <div class="operator">×</div>
+                    <figure>
+                        <img src="./images/JeremyGrossmanMask.jpg" alt="Mask Image">
+                        <figcaption>Mask</figcaption>
+                    </figure>
+                    <div class="operator">=</div>
+                    <figure>
+                        <img src="./images/outputs2.4/JeremyGrossman.jpg" alt="Jeremy Grossman Blend">
+                        <figcaption>Prof. Jeremy Grossman</figcaption>
                     </figure>
                 </div>
             </div>
@@ -180,5 +318,48 @@
     <footer>
         <p>CS180: Introduction to Computer Vision and Computational Photography</p>
     </footer>
+
+    <!-- Modal for image popup -->
+    <div id="imageModal" class="modal">
+        <span class="modal-close">&times;</span>
+        <img id="modalImage" class="modal-content">
+        <div id="modalCaption"></div>
+    </div>
+
+    <script>
+        // Get modal elements
+        const modal = document.getElementById('imageModal');
+        const modalImg = document.getElementById('modalImage');
+        const modalCaption = document.getElementById('modalCaption');
+        const closeBtn = document.getElementsByClassName('modal-close')[0];
+
+        // Add click event to all images in figures
+        document.querySelectorAll('figure img').forEach(img => {
+            img.addEventListener('click', function() {
+                modal.style.display = 'block';
+                modalImg.src = this.src;
+                modalCaption.innerHTML = this.parentElement.querySelector('figcaption').innerHTML;
+            });
+        });
+
+        // Close modal when clicking X
+        closeBtn.onclick = function() {
+            modal.style.display = 'none';
+        }
+
+        // Close modal when clicking outside the image
+        modal.onclick = function(event) {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && modal.style.display === 'block') {
+                modal.style.display = 'none';
+            }
+        });
+    </script>
 </body>
 </html>
