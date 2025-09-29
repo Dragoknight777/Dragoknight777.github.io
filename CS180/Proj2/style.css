@@ -162,6 +162,20 @@ h4 {
     margin: 1rem 0;
 }
 
+/* Comparison grid styles */
+.comparison-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin: 1.5rem 0;
+}
+
+@media (max-width: 768px) {
+    .comparison-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 figure {
     background: #fff;
     padding: 0.75rem;
@@ -214,6 +228,35 @@ figcaption {
     .alpha-grid {
         grid-template-columns: repeat(2, 1fr);
     }
+}
+
+/* Derivatives table styles */
+.derivatives-table {
+    margin: 2rem 0;
+    overflow-x: auto;
+}
+
+.derivatives-table table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+.derivatives-table td {
+    width: 50%;
+    padding: 0.75rem;
+    vertical-align: top;
+}
+
+.derivatives-table figure {
+    margin: 0;
+    height: 100%;
+}
+
+.derivatives-table img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
 }
 
 /* Stack table styles */
@@ -295,6 +338,35 @@ figcaption {
     padding: 1rem;
     border-radius: 4px;
     margin-top: 1rem;
+}
+
+/* Process table styles */
+.process-table {
+    margin: 2rem 0;
+    overflow-x: auto;
+}
+
+.process-table table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+.process-table td {
+    width: 50%;
+    padding: 0.75rem;
+    vertical-align: top;
+}
+
+.process-table figure {
+    margin: 0;
+    height: 100%;
+}
+
+.process-table img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
 }
 
 /* Blend process styles */

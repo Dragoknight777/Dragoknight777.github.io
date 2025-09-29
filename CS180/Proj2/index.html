@@ -62,23 +62,68 @@
 
             <div class="subsection">
                 <h3>1.2 Derivatives and Edge Detection</h3>
-               
+                <p>Edge detection is a fundamental operation in computer vision that helps identify boundaries and features in images. By computing image derivatives in different directions, we can detect rapid intensity changes that often correspond to meaningful image features. Here, we examine both raw derivatives and their binarized versions to highlight edge structures.</p>
+                
+                <div class="derivatives-table">
+                    <table>
+                        <tr>
+                            <td>
+                                <figure>
+                                    <img src="./images/outputs1/CamMan_Dx.jpg" alt="X Derivative">
+                                    <figcaption>X Derivative</figcaption>
+                                </figure>
+                            </td>
+                            <td>
+                                <figure>
+                                    <img src="./images/outputs1/CamMan_Dy.jpg" alt="Y Derivative">
+                                    <figcaption>Y Derivative</figcaption>
+                                </figure>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <figure>
+                                    <img src="./images/outputs1/CamMan_Dx_bin.jpg" alt="Binarized X Derivative">
+                                    <figcaption>Binarized X Derivative</figcaption>
+                                </figure>
+                            </td>
+                            <td>
+                                <figure>
+                                    <img src="./images/outputs1/CamMan_Dy_bin.jpg" alt="Binarized Y Derivative">
+                                    <figcaption>Binarized Y Derivative</figcaption>
+                                </figure>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <figure>
+                                    <img src="./images/outputs1/CamMan_Gradient.jpg" alt="Gradient">
+                                    <figcaption>Gradient</figcaption>
+                                </figure>
+                            </td>
+                            <td>
+                                <figure>
+                                    <img src="./images/outputs1/CamMan_Gradient_bin.jpg" alt="Binarized Gradient">
+                                    <figcaption>Binarized Gradient</figcaption>
+                                </figure>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
             </div>
 
             <div class="subsection">
                 <h3>1.3 Gaussian and DoG Filters</h3>
-                <div class="image-grid">
+                <p>The Difference of Gaussians (DoG) filter is created by subtracting two Gaussian-blurred versions of an image with different standard deviations. This operation effectively creates a band-pass filter that can be used for edge detection and image enhancement. When binarized, the DoG filter reveals prominent edges while suppressing noise.</p>
+                
+                <div class="comparison-grid">
                     <figure>
-                        <img src="./images/outputs1/CamMan_Blur.jpg" alt="Gaussian Blur">
-                        <figcaption>Gaussian Blur</figcaption>
+                        <img src="./images/outputs1/CamMan_Gradient_bin.jpg" alt="Regular Edge Detection">
+                        <figcaption>Regular Edge Detection</figcaption>
                     </figure>
                     <figure>
-                        <img src="./images/outputs1/CamMan_Gradient.jpg" alt="DoG Filter Result">
-                        <figcaption>DoG Filter Result</figcaption>
-                    </figure>
-                    <figure>
-                        <img src="./images/outputs1/CamMan_Gradient_bin.jpg" alt="Binarized Result">
-                        <figcaption>Binarized Result</figcaption>
+                        <img src="./images/outputs1/CamMan_Blur_Gradient_bin.jpg" alt="DoG Edge Detection">
+                        <figcaption>DoG Edge Detection</figcaption>
                     </figure>
                 </div>
             </div>
@@ -129,21 +174,55 @@
 
             <div class="subsection">
                 <h3>2.2 Hybrid Images</h3>
+                <p>Hybrid images combine the high-frequency components of one image with the low-frequency components of another to create a fascinating perceptual effect. These images appear different when viewed from different distances, demonstrating how our visual system processes spatial frequencies. By applying Fourier transforms and frequency-domain filtering, we can precisely control which components of each image to preserve.</p>
+                
                 <div class="hybrid-process">
                     <h4>Derek + Nutmeg Hybrid Process:</h4>
-                    <div class="image-grid">
-                        <figure>
-                            <img src="./images/outputs2.2/fft_front_log_DerekNutmeg.jpg" alt="Front FFT">
-                            <figcaption>Front Image FFT</figcaption>
-                        </figure>
-                        <figure>
-                            <img src="./images/outputs2.2/fft_back_log_DerekNutmeg.jpg" alt="Back FFT">
-                            <figcaption>Back Image FFT</figcaption>
-                        </figure>
-                        <figure>
-                            <img src="./images/outputs2.2/hybrid_DerekNutmeg.jpg" alt="Final Hybrid">
-                            <figcaption>Final Hybrid Image</figcaption>
-                        </figure>
+                    <div class="process-table">
+                        <table>
+                            <tr>
+                                <td>
+                                    <figure>
+                                        <img src="./images/outputs2.2/fft_back_log_DerekNutmeg.jpg" alt="Back Image FFT">
+                                        <figcaption>Low Frequency FFT</figcaption>
+                                    </figure>
+                                </td>
+                                <td>
+                                    <figure>
+                                        <img src="./images/outputs2.2/fft_low_log_DerekNutmeg.jpg" alt="Low Frequency Filter">
+                                        <figcaption>Filtered Low Frequency FFT</figcaption>
+                                    </figure>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <figure>
+                                        <img src="./images/outputs2.2/fft_front_log_DerekNutmeg.jpg" alt="Front Image FFT">
+                                        <figcaption>High Frequency FFT</figcaption>
+                                    </figure>
+                                </td>
+                                <td>
+                                    <figure>
+                                        <img src="./images/outputs2.2/fft_high_log_DerekNutmeg.jpg" alt="High Frequency Filter">
+                                        <figcaption>Filtered High Frequency FFT</figcaption>
+                                    </figure>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <figure>
+                                        <img src="./images/outputs2.2/fft_hybrid_log_DerekNutmeg.jpg" alt="Combined FFT">
+                                        <figcaption>Hybrid FFT</figcaption>
+                                    </figure>
+                                </td>
+                                <td>
+                                    <figure>
+                                        <img src="./images/outputs2.2/hybrid_DerekNutmeg.jpg" alt="Final Hybrid">
+                                        <figcaption>Derek Nutmeg Catman</figcaption>
+                                    </figure>
+                                </td>
+                            </tr>
+                        </table>
                     </div>
                 </div>
                 <div class="other-hybrids">
