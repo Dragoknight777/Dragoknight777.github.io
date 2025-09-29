@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS180 Project 2: Image Processing and Filtering</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>CS180 Project 2: Image Processing and Filtering</h1>
+    </header>
+
+    <main>
+        <section id="part1">
+            <h2>Part 1: Filters and Edges</h2>
+            
+            <div class="subsection">
+                <h3>1.1 Convolution Implementation</h3>
+                <p>Implementation comparison between numpy-only convolution and scipy.signal.convolve2d, analyzing runtime differences and boundary handling methods.</p>
+            </div>
+
+            <div class="subsection">
+                <h3>1.2 Derivatives and Edge Detection</h3>
+                <div class="image-grid">
+                    <figure>
+                        <img src="./images/outputs1/Daniel_Dx.jpg" alt="X Derivative">
+                        <figcaption>X Derivative</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./images/outputs1/Daniel_Dy.jpg" alt="Y Derivative">
+                        <figcaption>Y Derivative</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./images/outputs1/Daniel_Gradient.jpg" alt="Gradient Magnitude">
+                        <figcaption>Gradient Magnitude</figcaption>
+                    </figure>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>1.3 Gaussian and DoG Filters</h3>
+                <div class="image-grid">
+                    <figure>
+                        <img src="./images/outputs1/CamMan_Blur.jpg" alt="Gaussian Blur">
+                        <figcaption>Gaussian Blur</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./images/outputs1/CamMan_Gradient.jpg" alt="DoG Filter Result">
+                        <figcaption>DoG Filter Result</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./images/outputs1/CamMan_Gradient_bin.jpg" alt="Binarized Result">
+                        <figcaption>Binarized Result</figcaption>
+                    </figure>
+                </div>
+            </div>
+        </section>
+
+        <section id="part2">
+            <h2>Part 2: Applications</h2>
+
+            <div class="subsection">
+                <h3>2.1 Unsharp Mask Filter</h3>
+                <p>Demonstration of unsharp masking and its relationship with blur filters and high frequencies.</p>
+                <div class="image-grid">
+                    <figure>
+                        <img src="./images/outputs2.1/taj_blur.jpg" alt="Blurred Taj">
+                        <figcaption>Blurred Taj Mahal</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./images/outputs2.1/taj_high_color_alpha.jpg" alt="High Frequency">
+                        <figcaption>High Frequency Component</figcaption>
+                    </figure>
+                </div>
+                <div class="alpha-variations">
+                    <h4>Sharpening Amount Variations:</h4>
+                    <div class="image-grid">
+                        <figure>
+                            <img src="./images/outputs2.1/taj_sharp_color_alpha_0.50.jpg" alt="Alpha 0.5">
+                            <figcaption>α = 0.50</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="./images/outputs2.1/taj_sharp_color_alpha_1.50.jpg" alt="Alpha 1.5">
+                            <figcaption>α = 1.50</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="./images/outputs2.1/taj_sharp_color_alpha_3.00.jpg" alt="Alpha 3.0">
+                            <figcaption>α = 3.00</figcaption>
+                        </figure>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>2.2 Hybrid Images</h3>
+                <div class="hybrid-process">
+                    <h4>Derek + Nutmeg Hybrid Process:</h4>
+                    <div class="image-grid">
+                        <figure>
+                            <img src="./images/outputs2.2/fft_front_log_DerekNutmeg.jpg" alt="Front FFT">
+                            <figcaption>Front Image FFT</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="./images/outputs2.2/fft_back_log_DerekNutmeg.jpg" alt="Back FFT">
+                            <figcaption>Back Image FFT</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="./images/outputs2.2/hybrid_DerekNutmeg.jpg" alt="Final Hybrid">
+                            <figcaption>Final Hybrid Image</figcaption>
+                        </figure>
+                    </div>
+                </div>
+                <div class="other-hybrids">
+                    <h4>Additional Hybrid Images:</h4>
+                    <div class="image-grid">
+                        <figure>
+                            <img src="./images/outputs2.2/hybrid_Pedriesta.jpg" alt="Pedri-Iniesta Hybrid">
+                            <figcaption>Pedri-Iniesta Hybrid</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="./images/outputs2.2/hybrid_RedDaniel.jpg" alt="Red-Daniel Hybrid">
+                            <figcaption>Red Angry Bird-Daniel Hybrid</figcaption>
+                        </figure>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>2.3 Gaussian and Laplacian Stacks</h3>
+                <div class="stacks">
+                    <h4>Apple Image Stacks:</h4>
+                    <div class="image-grid">
+                        <figure>
+                            <img src="./images/outputs2.3/G0_apple_.jpg" alt="G0 Apple">
+                            <figcaption>G0 Apple</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="./images/outputs2.3/G2_apple_.jpg" alt="G2 Apple">
+                            <figcaption>G2 Apple</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="./images/outputs2.3/G4_apple_.jpg" alt="G4 Apple">
+                            <figcaption>G4 Apple</figcaption>
+                        </figure>
+                    </div>
+                    <div class="image-grid">
+                        <figure>
+                            <img src="./images/outputs2.3/L0_apple_.jpg" alt="L0 Apple">
+                            <figcaption>L0 Apple</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="./images/outputs2.3/L2_apple_.jpg" alt="L2 Apple">
+                            <figcaption>L2 Apple</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="./images/outputs2.3/L4_apple_.jpg" alt="L4 Apple">
+                            <figcaption>L4 Apple</figcaption>
+                        </figure>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>2.4 Custom Blended Images</h3>
+                <div class="image-grid">
+                    <figure>
+                        <img src="./images/outputs2.4/EfrosWorship.jpg" alt="Efros-Worship Blend">
+                        <figcaption>Efros-Worship Blend</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="./images/outputs2.4/oraple.jpg" alt="Orange-Apple Blend">
+                        <figcaption>Orange-Apple Blend (Irregular Mask)</figcaption>
+                    </figure>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>CS180: Introduction to Computer Vision and Computational Photography</p>
+    </footer>
+</body>
+</html>
