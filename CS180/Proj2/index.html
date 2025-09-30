@@ -4,7 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CS180 Project 2: Image Processing and Filtering</title>
+    <!-- KaTeX CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" integrity="sha384-GvrOXuhMATgEsSwCs4smul74iXGOixntILdUW9XmUC6+HX0sLNAK3q71HotJqlAn" crossorigin="anonymous">
+    <!-- KaTeX JavaScript -->
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js" integrity="sha384-cpW21h6RZv/phavutF+AuVYrr+dA8xD9zs6FwLpaCct6O9ctzYFfFr4dgmgccOTx" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="style.css">
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            renderMathInElement(document.body, {
+                delimiters: [
+                    {left: "$$", right: "$$", display: true},
+                    {left: "$", right: "$", display: false}
+                ],
+                throwOnError: false
+            });
+        });
+    </script>
 </head>
 <body>
     <header>
@@ -21,7 +37,7 @@
             <p>For this project I explored some core ideas in computational photography and image processing. I started by building 2-D convolution from scratch to understand how filtering works, 
                 then used finite difference filters and Gaussian smoothing to detect edges and see how blurring cuts down noise. 
                 After that I moved on to more creative effects: I sharpened a color photo with unsharp masking, 
-                made hybrid images that look like one subject up close and another from far away, and used Gaussian and Laplacian stacks for multiresolution blending to merge two pictures seamlessly./p>
+                made hybrid images that look like one subject up close and another from far away, and used Gaussian and Laplacian stacks for multiresolution blending to merge two pictures seamlessly.</p>
         </section>
 
         <section id="part1">
@@ -66,11 +82,10 @@
                 <h3>1.2 Finite Difference Operator</h3>
                 <p>For Part 1.2 I implemented a finite difference operator to detect edges in the classic cameraman image. 
                     After converting the image to grayscale and scaling pixel values to the [0, 1] range, I convolved it with two simple derivative filters: 
-                    D_x=[−1,0,1] to capture horizontal intensity changes (vertical edges) and D_y=[−1;0;1] to capture vertical intensity changes (horizontal edges). 
+                    $D_x=[-1,0,1]$ to capture horizontal intensity changes (vertical edges) and $D_y=[-1,0,1]^T$ to capture vertical intensity changes (horizontal edges). 
                     I used scipy.signal.convolve2d in “same” mode with zero padding so the output size matched the input. The horizontal and vertical derivative responses were then 
-                    combined to compute the gradient magnitude y=[−1;0;1] to capture vertical intensity changes (horizontal edges). I used scipy.signal.convolve2d in 
-                    “same” mode with zero padding so the output size matched the input. The horizontal and vertical derivative responses were then combined to compute the gradient magnitude, 
-                    giving a single image that represents edge strength regardless of direction. Finally, I produced binary edge maps by thresholding the absolute derivative responses and 
+                    used to compute the gradient magnitude $\|\nabla I\| = \sqrt{D_x^2 + D_y^2}$ to capture vertical intensity changes (horizontal edges). 
+                    Finally, I produced binary edge maps by thresholding the absolute derivative responses and 
                     the gradient magnitude to remove noise and highlight only the most significant edges</p>
                 
                 <div class="derivatives-table">
@@ -123,20 +138,47 @@
 
             <div class="subsection">
                 <h3>1.3 Gaussian and DoG Filters</h3>
-                <p>For Part 1.3 I applied Gaussian smoothing before computing derivatives to reduce noise in the edge detection process. 
-                    The grayscale cameraman image was first blurred with a 9×9 Gaussian kernel (σ=1.6), then convolved with the same finite difference filters D_x and D_y as in Part 1.2. 
-                    From these smoothed derivatives I computed the gradient magnitude and created binary edge maps using lower thresholds. 
-                    The Gaussian pre–filtering suppresses high-frequency noise, producing cleaner, more continuous edges compared to the unsmoothed finite difference results</p>
+                <p>I first built a 2D Gaussian $G$ using <code>cv2.getGaussianKernel</code> and blurred the image. Repeating Part 1.2 on the blurred image (convolving with $D_x$ and $D_y$) reduces noise and gives cleaner edges. Next, I constructed Difference of Gaussian (DoG) filters by convolving the Gaussian with the derivative kernels ($DoG_x = G * D_x$, $DoG_y = G * D_y$) and applied them directly to the image. The single-step DoG results closely match the two-step blur+derivative results, confirming equivalence up to small boundary/rounding differences. Compared to the raw finite differences from Part 1.2, both Gaussian-smoothed and DoG edges are less noisy and better localized around salient boundaries.</p>
                 
-                <div class="comparison-grid">
-                    <figure>
-                        <img src="./images/outputs1/CamMan_Gradient_bin.jpg" alt="Regular Edge Detection">
-                        <figcaption>Regular Edge Detection</figcaption>
-                    </figure>
-                    <figure>
-                        <img src="./images/outputs1/CamMan_Blur_Gradient_bin.jpg" alt="DoG Edge Detection">
-                        <figcaption>DoG Edge Detection</figcaption>
-                    </figure>
+                <div class="derivatives-table">
+                    <table>
+                        <tr>
+                            <td>
+                                <figure>
+                                    <img src="./images/outputs1/DoGx_kernel.jpg" alt="DoG X Kernel">
+                                    <figcaption>DoG X Kernel Visualization</figcaption>
+                                </figure>
+                            </td>
+                            <td>
+                                <figure>
+                                    <img src="./images/outputs1/DoGy_kernel.jpg" alt="DoG Y Kernel">
+                                    <figcaption>DoG Y Kernel Visualization</figcaption>
+                                </figure>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <figure>
+                                    <img src="./images/outputs1/CamMan_DoGx.jpg" alt="DoG X Result">
+                                    <figcaption>DoG X Filter Result</figcaption>
+                                </figure>
+                            </td>
+                            <td>
+                                <figure>
+                                    <img src="./images/outputs1/CamMan_DoGy.jpg" alt="DoG Y Result">
+                                    <figcaption>DoG Y Filter Result</figcaption>
+                                </figure>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                <figure>
+                                    <img src="./images/outputs1/CamMan_DoGGrad.jpg" alt="DoG Gradient">
+                                    <figcaption>Combined DoG Gradient Magnitude</figcaption>
+                                </figure>
+                            </td>
+                        </tr>
+                    </table>
                 </div>
             </div>
         </section>
@@ -148,7 +190,7 @@
                 <h3>2.1 Image Sharpening</h3>
                 <p>To emphasize high-frequency details, I implemented an unsharp mask in full color. First, the input image (the Taj Mahal) is blurred by convolving each RGB channel with a normalized 2-D Gaussian kernel
                     (ksize = 9, sigma = 1.6). This produces a smooth low-frequency version of the scene. Subtracting the blurred image from the original isolates the high-frequency component—fine details and edges. 
-                    The sharpened result is then obtained by adding a scaled version of this high-frequency signal back to the original image: I_sharp = I + α * (I - I_blur), where α controls the sharpening amount.
+                    The sharpened result is then obtained by adding a scaled version of this high-frequency signal back to the original image: $I_{\text{sharp}} = I + \alpha(I - I_{\text{blur}})$, where $\alpha$ controls the sharpening amount.
                     I experimented with α values ranging from 0.5 to 5 to show how increasing the weight of the high frequencies gradually enhances edge contrast and texture.
                 </p>
                 <div class="image-grid">
@@ -264,7 +306,7 @@
                 <h3>2.3 Gaussian and Laplacian Stacks</h3>
                 <p>To explore multiresolution analysis, I generated Gaussian and Laplacian stacks of two images—an orange and an apple. A Gaussian stack is built by repeatedly blurring 
                     the image with a 2-D Gaussian filter (σ=2.0 per level) to progressively remove high-frequency detail. The Laplacian stack captures the band-pass information at each level 
-                    by subtracting successive Gaussian levels: L_i​=G_i​−G_(i+1​), L_(N−1​)=G_(N−1​). These stacks reveal image content at different spatial frequencies and form the basis for multiresolution blending</p>
+                    by subtracting successive Gaussian levels: $L_i = G_i - G_{i+1}$, $L_{N-1} = G_{N-1}$. These stacks reveal image content at different spatial frequencies and form the basis for multiresolution blending</p>
                 <div class="stacks">
                     <h4>Gaussian and Laplacian Stacks Comparison:</h4>
                     <div class="stack-table">
