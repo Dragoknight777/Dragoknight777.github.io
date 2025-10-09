@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Project 3A — Image Warping & Mosaicing</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="./style.css" />
+  <!-- MathJax: render LaTeX equations on the page -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(','\\)'], ['$', '$']], displayMath: [['$$','$$'], ['\\[','\\]']] },
+      options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" defer></script>
+</head>
+<body>
+
+<header>
+  <h1>Image Warping and Mosaicing (Proj 3A)</h1>
+  <p>CS180/280A • Fall 2025</p>
+</header>
+
+<section id="overview">
+  <h2>Overview</h2>
+  <p>
+    I implement planar homography estimation from point correspondences, inverse warping with
+    both nearest-neighbor and bilinear interpolation, and simple feather blending to stitch pairs
+    of photos into panoramas. The code builds the DLT system for a homography, solves it via the
+    smallest eigenvector of \(A^\top A\), predicts the canvas bounds by transforming image corners,
+    and blends overlapping regions with a distance-to-edge weight (gamma falloff).
+  </p>
+</section>
+
+<section id="data" >
+  <h2>A.1 Shoot & Digitize</h2>
+  <p>
+    I captured three scenes with significant overlap: Hearst, Parking Lot, and Kitchen.
+    Each set consists of a view that I warp and one that I warp to.
+  </p>
+  <div class="figure-grid two-columns">
+    <!-- Replace with your actual originals -->
+    <div class="figure">
+      <img src="images/hearstleft.jpg" alt="Hearst left" />
+      <div class="caption">Hearst — left</div>
+    </div>
+    <div class="figure">
+      <img src="images/hearstright.jpg" alt="Hearst right" />
+      <div class="caption">Hearst — right</div>
+    </div>
+
+    <div class="figure">
+      <img src="images/parkingleft.jpg" alt="Parking left" />
+      <div class="caption">Parking — left</div>
+    </div>
+    <div class="figure">
+      <img src="images/parkingright.jpg" alt="Parking right" />
+      <div class="caption">Parking — right</div>
+    </div>
+
+    <div class="figure">
+      <img src="images/kitchenleft.jpg" alt="Kitchen left" />
+      <div class="caption">Kitchen — left</div>
+    </div>
+    <div class="figure">
+      <img src="images/kitchenright.jpg" alt="Kitchen right" />
+      <div class="caption">Kitchen — right</div>
+    </div>
+  </div>
+</section>
+
+<section id="homography">
+  <h2>A.2 Recover Homographies</h2>
+  <p>
+    I form the standard DLT matrix with two rows per correspondence \((x,y)\!\leftrightarrow\!(u,v)\), then
+    compute the homography as the eigenvector associated with the smallest eigenvalue of \(A^\top A\)
+    (reshaped to \(3\times3\) and normalized so \(H_{33}=1\)).
+  </p>
+  <div class="code">
+    # Row pattern used (u,v from right image; x,y from left image):<br/>
+    [x, y, 1, 0, 0, 0, -u*x, -u*y, -u]<br/>
+    [0, 0, 0, x, y, 1, -v*x, -v*y, -v]
+  </div>
+
+  <h3>Recovered matrices</h3>
+  <div class="code">
+    <div>H_hearst = $$\begin{bmatrix}
+      2.88988154e+00 & -4.05352773e-02 & -8.53498499e+03 \\
+      7.47392228e-01 & 2.39298908e+00 & -3.46312296e+03 \\
+      3.26109171e-04 & 4.19004124e-06 & 1.00000000e+00
+    \end{bmatrix}$$</div>
+    <div>H_parking = $$\begin{bmatrix}
+      5.20478150e-01 & 5.98155432e-02 & 1.46618912e+03 \\
+      -2.11955367e-01 & 8.91271245e-01 & 1.91033781e+02 \\
+      -1.27856278e-04 & 2.07037962e-05 & 1.00000000e+00
+    \end{bmatrix}$$</div>
+    <div>H_kitchen = $$\begin{bmatrix}
+      1.98697043e+00 & 2.12945343e-02 & -4.24030075e+03 \\
+      3.56015356e-01 & 1.62764767e+00 & -1.25441368e+03 \\
+      1.71525680e-04 & -7.36226937e-06 & 1.00000000e+00
+    \end{bmatrix}$$</div>
+  </div>
+</section>
+
+<section id="warping">
+  <h2>A.3 Warping (Inverse Mapping + Interpolation)</h2>
+  <p>
+    Warping uses inverse mapping: for each pixel on the output canvas, map back through
+    \(H^{-1}\) to sample the source. I implemented the warp using both nearest-neighbor and
+    bilinear interpolation.
+    The canvas bounds are computed by transforming the left image corners with \(H\), then unioning
+    with the right image extent to set <code>(min_x,min_y,max_x,max_y)</code>.
+  </p>
+
+  <h3>Interpolation comparison</h3>
+  <div class="figure-grid two-columns">
+    <!-- Hearst -->
+    <div class="figure">
+      <img src="images/hearst_warpedleft_nn.jpg" alt="Hearst warped left (NN)" />
+      <div class="caption">Hearst — warped left (nearest neighbor)</div>
+    </div>
+    <div class="figure">
+      <img src="images/hearst_warpedleft_bl.jpg" alt="Hearst warped left (bilinear)" />
+      <div class="caption">Hearst — warped left (bilinear)</div>
+    </div>
+
+    <!-- Parking -->
+    <div class="figure">
+      <img src="images/parking_warpedleft_nn.jpg" alt="Parking warped left (NN)" />
+      <div class="caption">Parking — warped left (nearest neighbor)</div>
+    </div>
+    <div class="figure">
+      <img src="images/parking_warpedleft_bl.jpg" alt="Parking warped left (bilinear)" />
+      <div class="caption">Parking — warped left (bilinear)</div>
+    </div>
+
+    <!-- Kitchen -->
+    <div class="figure">
+      <img src="images/kitchen_warpedleft_nn.jpg" alt="Kitchen warped left (NN)" />
+      <div class="caption">Kitchen — warped left (nearest neighbor)</div>
+    </div>
+    <div class="figure">
+      <img src="images/kitchen_warpedleft_bl.jpg" alt="Kitchen warped left (bilinear)" />
+      <div class="caption">Kitchen — warped left (bilinear)</div>
+    </div>
+  </div>
+
+  <h3>Notes on speed</h3>
+  <ul>
+    <li>Nearest neighbor is certainly faster</li>
+    <li>Nearest Neighbor vs Bilinear times:</li>
+    <li>Hearst: NN ~35s, Bilinear ~100s</li>
+    <li>Parking: NN ~8.8s, Bilinear ~18s</li>
+    <li>Kitchen: NN ~17s, Bilinear ~36s</li>
+    <li>To be honest I can't really notice any difference between the nearest neighbor and bilinear produced images.</li>
+  </ul>
+</section>
+
+<section id="mosaics">
+  <h2>A.4 Mosaics + Feather Blending</h2>
+  <p>
+    I assemble panoramas by placing the right image on a canvas, warping the left image with the
+    recovered \(H\), and blending where they overlap using a per-pixel alpha based on distance to
+    the image border. The alpha is <code>(distance_to_edge / max_distance) ^ gamma</code>. Finally, I normalize by the sum of alphas
+    to avoid seams.
+  </p>
+
+  <h3>Scene 1 — Hearst</h3>
+  <div class="figure-grid">
+    <div class="figure">
+      <img src="images/hearst_panorama_nn.jpg" alt="Hearst panorama NN" />
+      <div class="caption">Panorama (nearest neighbor sampling)</div>
+    </div>
+    <div class="figure">
+      <img src="images/hearst_panorama_bilinear.jpg" alt="Hearst panorama bilinear" />
+      <div class="caption">Panorama (bilinear sampling)</div>
+    </div>
+  </div>
+
+  <h3>Scene 2 — Parking Lot</h3>
+  <div class="figure-grid">
+    <div class="figure">
+      <img src="images/parking_panorama_nn.jpg" alt="Parking panorama NN" />
+      <div class="caption">Panorama (nearest neighbor sampling)</div>
+    </div>
+    <div class="figure">
+      <img src="images/parking_panorama_bl.jpg" alt="Parking panorama bilinear" />
+      <div class="caption">Panorama (bilinear sampling)</div>
+    </div>
+  </div>
+
+  <h3>Scene 3 — Kitchen</h3>
+  <div class="figure-grid">
+    <div class="figure">
+      <img src="images/kitchen_panorama_nn.jpg" alt="Kitchen panorama NN" />
+      <div class="caption">Panorama (nearest neighbor sampling)</div>
+    </div>
+    <div class="figure">
+      <img src="images/kitchen_panorama_bl.jpg" alt="Kitchen panorama bilinear" />
+      <div class="caption">Panorama (bilinear sampling)</div>
+    </div>
+  </div>
+
+  <h3>Blending details</h3>
+  <ul class="tight">
+    <li>Alpha per image: distance-transform–style falloff from center to edges (implemented as min-distance to border).</li>
+    <li>Final pixel = weighted average by alpha sums; prevents hard seams in overlap.</li>
+    <li>Gamma controls edge softness; I used ~1.5–1.8.</li>
+  </ul>
+</section>
+
+<footer style="margin-top:40px; font-size:.9rem; color:#666">
+  <p>Course spec: CS180/280A Project 3A — Image Warping & Mosaicing.</p>
+</footer>
+
+</body>
+</html>
