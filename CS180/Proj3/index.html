@@ -209,6 +209,183 @@
   </ul>
 </section>
 
+<section id="b1">
+  <h2>Part B.1 — Harris Corner Detection &amp; ANMS</h2>
+
+  <p>
+    Harris corner detection finds repeatable “interest points” by looking for pixels where intensity changes strongly in two directions. After computing a corner strength map, we keep only the local peaks. However, raw peaks often clump together in textured areas, so we apply Adaptive Non-Maximal Suppression (ANMS): for each detected corner we measure how far you’d have to go to find a noticeably stronger one, and treat that distance as its “radius.” Sorting by this radius and keeping the top N gives a set of points that are both strong and well spread out across the image.
+  </p>
+
+  <!-- Harris responses: left vs right -->
+  <h3>Harris: All Detected Corners</h3>
+  <div class="compare">
+    <figure class="figure">
+      <img src="./images2/outputs_b1/kitchen_left_harris.png" alt="Harris corners — left image" class="img-full img-shadow">
+      <figcaption class="caption">Harris corners (left image).</figcaption>
+    </figure>
+    <figure class="figure">
+      <img src="./images2/outputs_b1/kitchen_right_harris.png" alt="Harris corners — right image" class="img-full img-shadow">
+      <figcaption class="caption">Harris corners (right image).</figcaption>
+    </figure>
+  </div>
+
+  <!-- ANMS selections: left vs right -->
+  <h3>Adaptive Non-Maximal Suppression (ANMS)</h3>
+  <div class="compare">
+    <figure class="figure">
+      <img src="./images2/outputs_b1/kitchen_left_anms.png" alt="ANMS corners — left image" class="img-full img-shadow">
+      <figcaption class="caption">Top-1000 corners after ANMS (left image).</figcaption>
+    </figure>
+    <figure class="figure">
+      <img src="./images2/outputs_b1/kitchen_right_anms.png" alt="ANMS corners — right image" class="img-full img-shadow">
+      <figcaption class="caption">Top-1000 corners after ANMS (right image).</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- =========================
+     B.2 — Feature Descriptor Extraction
+     ========================= -->
+<section id="b2">
+  <h2>Part B.2 — Feature Descriptor Extraction</h2>
+
+  <p>
+    Around each ANMS-selected corner, a <strong>40 × 40 pixel</strong> window is cropped, 
+    blurred slightly, and resampled to an <strong>8 × 8</strong> patch. 
+    Each patch vector \(p\) is then <em>bias / gain normalized</em> to achieve illumination invariance:
+  </p>
+
+  <p class="eq">\(p' = \dfrac{p - \mu(p)}{\sigma(p) + \epsilon}\)</p>
+
+  <!-- <p>
+    These descriptors capture coarse gradient patterns and intensity structure, enabling 
+    robust correspondence under lighting changes or minor perspective variations.
+    Below are 20 sample patches (top features by Harris score) from each image in the <em>kitchen</em> pair.
+  </p> -->
+
+
+  <p>
+    Around each ANMS point, we capture a compact description of the local appearance by cropping a 40×40 pixel window, downsampling it to 8×8, and normalizing it to remove overall brightness and contrast. The result is a 64-value vector that summarizes the coarse pattern of edges and intensities near that point. These lightweight descriptors are simple but effective: they are fast to compute, reasonably robust to lighting changes, and comparable between different images of the same scene.
+  </p>
+
+  <div class="figure-vertical">
+    <figure class="figure">
+      <img src="./images2/outputs_b2/kitchen_left_descriptors_grid.png"
+           alt="8×8 descriptor patches — left image"
+           class="img-full img-shadow">
+      <figcaption class="caption">Top 20 8×8 normalized descriptors from the left image.</figcaption>
+    </figure>
+
+    <figure class="figure">
+      <img src="./images2/outputs_b2/kitchen_right_descriptors_grid.png"
+           alt="8×8 descriptor patches — right image"
+           class="img-full img-shadow">
+      <figcaption class="caption">Top 20 8×8 normalized descriptors from the right image.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- =========================
+     B.3 — Feature Matching (Lowe Ratio)
+     ========================= -->
+<section id="b3">
+  <h2>Part B.3 — Feature Matching</h2>
+
+  <p>
+    Descriptors from the two images are matched using Euclidean distance
+    <span class="eq">\(d(x,y)=\lVert x-y\rVert_2\)</span>. For each descriptor in the left image,
+    we find the nearest and second-nearest neighbors in the right image and apply the
+    <em>Lowe ratio</em> cutoff based on 
+    <span class="eq">\(\frac{e_{1-NN}}{e_{2-NN}}\)</span>, where I cutoff any images with a Lowe ratio above 0.7.
+    This suppresses ambiguous matches in repeated textures while keeping distinctive correspondences.
+    The figure shows the best matches (sorted by ratio); each cell displays the 8×8 patch from
+    each image and its ratio.
+  </p>
+
+  <figure class="figure figure-narrow">
+    <img src="./images2/outputs_b3/kitchen_matched_patch_gallery.png"
+         alt="Matched 8×8 patch gallery with Lowe ratios"
+         class="img-full img-shadow">
+    <figcaption class="caption">
+      Kitchen pair — matched 8×8 patches (left vs right) with Lowe ratios; lower is better.
+    </figcaption>
+  </figure>
+</section>
+
+<!-- =========================
+     B.4 — RANSAC for Robust Homography
+     ========================= -->
+<section id="b4">
+  <h2>Part B.4 — RANSAC for Robust Homography</h2>
+
+  <p>
+    The tentative matches include some mistakes, so we use RANSAC to estimate a reliable homography. 
+    RANSAC repeatedly samples four matches, computes a candidate warp, and counts how many other matches 
+    agree with it within a small pixel error. The model with the most agreement is then recomputed from 
+    all its inliers and used to warp and blend the images into a panorama. The inlier visualizations 
+    highlight only the correspondences that support the final mosaic. I am actually quite surprised by 
+    how well the corners matched even though a lot of corners for the hearst and parking lot images
+    were in trees. 
+  </p>
+
+
+  <!-- ===== KITCHEN ===== -->
+  <h3>Kitchen</h3>
+  <div class="compare">
+    <figure class="figure">
+      <img src="./images2/outputs_b4/kitchen_left_inliers.png" alt="Kitchen — inlier keypoints (left)" class="img-full img-shadow">
+      <figcaption class="caption">Inlier correspondences — left image.</figcaption>
+    </figure>
+    <figure class="figure">
+      <img src="./images2/outputs_b4/kitchen_right_inliers.png" alt="Kitchen — inlier keypoints (right)" class="img-full img-shadow">
+      <figcaption class="caption">Inlier correspondences — right image.</figcaption>
+    </figure>
+  </div>
+  <figure class="figure figure-wide">
+    <img src="./images2/outputs_b4/kitchen_mosaic.png" alt="Kitchen mosaic" class="img-full img-shadow">
+    <figcaption class="caption">Final mosaic (Kitchen) using the robust homography.</figcaption>
+  </figure>
+
+  <!-- ===== PARKING ===== -->
+  <h3>Parking</h3>
+  <div class="compare">
+    <figure class="figure">
+      <img src="./images2/outputs_b4/parking_left_inliers.png" alt="Parking — inlier keypoints (left)" class="img-full img-shadow">
+      <figcaption class="caption">Inlier correspondences — left image.</figcaption>
+    </figure>
+    <figure class="figure">
+      <img src="./images2/outputs_b4/parking_right_inliers.png" alt="Parking — inlier keypoints (right)" class="img-full img-shadow">
+      <figcaption class="caption">Inlier correspondences — right image.</figcaption>
+    </figure>
+  </div>
+  <figure class="figure figure-wide">
+    <img src="./images2/outputs_b4/parking_mosaic.png" alt="Parking mosaic" class="img-full img-shadow">
+    <figcaption class="caption">Final mosaic (Parking) using the robust homography.</figcaption>
+  </figure>
+
+  <!-- ===== HEARST ===== -->
+  <h3>Hearst</h3>
+  <div class="compare">
+    <figure class="figure">
+      <img src="./images2/outputs_b4/hearst_left_inliers.png" alt="Hearst — inlier keypoints (left)" class="img-full img-shadow">
+      <figcaption class="caption">Inlier correspondences — left image.</figcaption>
+    </figure>
+    <figure class="figure">
+      <img src="./images2/outputs_b4/hearst_right_inliers.png" alt="Hearst — inlier keypoints (right)" class="img-full img-shadow">
+      <figcaption class="caption">Inlier correspondences — right image.</figcaption>
+    </figure>
+  </div>
+  <figure class="figure figure-wide">
+    <img src="./images2/outputs_b4/hearst_mosaic.png" alt="Hearst mosaic" class="img-full img-shadow">
+    <figcaption class="caption">Final mosaic (Hearst) using the robust homography.</figcaption>
+  </figure>
+
+  
+
+  
+</section>
+
+
 <footer style="margin-top:40px; font-size:.9rem; color:#666">
   <p>Course spec: CS180/280A Project 3A — Image Warping & Mosaicing.</p>
 </footer>
