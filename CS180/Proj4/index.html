@@ -140,7 +140,7 @@ Focal length: ...
     Training successfully converged, with PSNR steadily increasing throughout the
     optimization. I saved intermediate reconstructions as well as the final
     reconstruction, and I generated a PSNR-vs-iteration plot showing the improvement in
-    image quality over time. The PSNR peaked around iteration 600.
+    image quality over time. The PSNR peaked at just under 26 around iteration 600.
   </p>
 
   <!-- Add your intermediate reconstructions & PSNR curve images below -->
@@ -178,8 +178,7 @@ Focal length: ...
 
   <p>
     I used the same NeRF implementation for both the Lego dataset and my own captured
-    dataset by simply switching the input <code>.npz</code> file. My pipeline includes
-    ray construction, ray sampling, positional encoding, a full NeRF MLP, volume
+    dataset. My pipeline includes ray construction, ray sampling, positional encoding, a full NeRF MLP, volume
     rendering, validation PSNR evaluation, intermediate visualizations, and novel-view
     rendering.
   </p>
@@ -221,6 +220,15 @@ Focal length: ...
     ReLU), and a color head conditioned on the encoded view direction (with a final
     Sigmoid). This matches the structure of the original NeRF model.
   </p>
+
+  <div class="figure-vertical">
+    <figure class="figure">
+      <img src="./images/modelproj4.png"
+           alt="8×8 descriptor patches — left image"
+           class="img-full img-shadow">
+      <figcaption class="caption"></figcaption>
+    </figure>
+  </div>
 
   <h3>2.5 Volume Rendering</h3>
   <p>
