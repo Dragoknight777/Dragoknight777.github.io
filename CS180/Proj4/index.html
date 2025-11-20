@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Project 4 – Neural Radiance Field</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="./style.css" />
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(','\\)'], ['$', '$']], displayMath: [['$$','$$'], ['\\[','\\]']] },
+      options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" defer></script>
+</head>
+<body>
+
+<header>
+  <h1>Neural Radiance Field (NeRF)</h1>
+  <p>CS180/280A • Fall 2025</p>
+</header>
+
+<section id="overview">
+  <h2>Overview</h2>
+  <p>
+    In this project, I implement a complete Neural Radiance Field (NeRF) pipeline. I start by calibrating my own camera using ArUco tags, estimating camera poses, and packaging my images into a dataset suitable for NeRF training. I then train a 2D neural field (Part 1) followed by a full 3D NeRF (Part 2), and finally train a NeRF on my own scanned object (Part 2.6). This webpage documents my implementation choices, experiments, results, and visualizations.
+  </p>
+</section>
+
+<section id="part0">
+  <h2>Part 0: Camera Calibration and 3D Scanning</h2>
+
+  <h3>0.1 Camera Calibration</h3>
+  <p>
+    I captured 30 calibration images of the provided ArUco grid using my phone camera at a 1x zoom. For each image, I detected 4×4 ArUco markers using OpenCV's detector, collected the 2D corner observations, and paired them with known 3D coordinates. I fed all observations into <code>cv2.calibrateCamera()</code> to estimate my intrinsics and distortion coefficients.
+  </p>
+
+  <div class="code">
+Camera Matrix K:
+fx = 527.51, fy = 528.57
+cx = 288.91, cy = 341.13
+
+Distortion Coefficients:
+[0.264, -1.670, -0.024, 0.016, 3.439]
+
+Reprojection Error: 0.4509 pixels
+  </div>
+
+  <div class="figure-grid two-columns">
+    <div class="figure">
+      <img src="images/IMG_4378.png" alt="Calibration image 1" />
+      <div class="caption">Calibration image 1</div>
+    </div>
+    <div class="figure">
+      <img src="images/IMG_4379.png" alt="Calibration image 2" />
+      <div class="caption">Calibration image 2</div>
+    </div>
+  </div>
+
+  <h3>0.2 Object Capture</h3>
+  <p>
+    I placed my dino on a single printed ArUco tag. Using the same camera and zoom settings as in calibration, I captured 34 images from multiple angles. I tried to maintain consistent lighting, avoid motion blur, and keep the object filling a reasonable portion of the frame.
+  </p>
+
+  <div class="figure-grid two-columns">
+    <div class="figure">
+      <img src="images/IMG_4408.png" alt="Dino capture 1" />
+      <div class="caption">Dino capture 1</div>
+    </div>
+    <div class="figure">
+      <img src="images/IMG_4409.png" alt="Dino capture 2" />
+      <div class="caption">Dino capture 2</div>
+    </div>
+  </div>
+
+  <h3>0.3 Pose Estimation</h3>
+  <p>
+    For each capture image, I detected the ArUco tag and used <code>cv2.solvePnP()</code> with the tag's known 3D corner coordinates to estimate rotation and translation. I converted rotation vectors to matrices using <code>cv2.Rodrigues()</code> and inverted the resulting pose to get the camera-to-world (c2w) matrix. I verified pose consistency by visualizing camera frustums in Viser.
+  </p>
+
+  <div class="figure-grid two-columns">
+    <div class="figure">
+      <img src="images/viser_view1.png" alt="Viser visualization 1" />
+      <div class="caption">Camera frustums visualization 1</div>
+    </div>
+    <div class="figure">
+      <img src="images/viser_view2.png" alt="Viser visualization 2" />
+      <div class="caption">Camera frustums visualization 2</div>
+    </div>
+  </div>
+
+  <h3>0.4 Dataset Creation</h3> Dataset Creation</h3>
+  <p>
+    I undistorted each image using <code>cv2.undistort()</code>. When black boundaries appeared, I used <code>cv2.getOptimalNewCameraMatrix()</code> and cropped to the returned ROI. I then updated the principal point accordingly. I split the dataset into train/val/test at a 7/2/1 ratio and saved everything to an <code>.npz</code> file with the required keys (<code>images_train</code>, <code>c2ws_train</code>, etc.).
+  </p>
+
+  <div class="code">
+Dataset Summary:
+Training images: (...)
+Validation images: (...)
+Test cameras: (...)
+Focal length: ...
+  </div>
+</section>
+
+<section id="part1">
+  <h2>Part 1: Fitting a Neural Field to a 2D Image</h2>
+
+  <h3>Network Architecture</h3>
+  <p>
+    I implemented an MLP that maps 2D pixel coordinates to RGB values. Before feeding
+    the coordinates into the network, I applied sinusoidal positional encoding with
+    <code>L = 10</code> frequency bands. The MLP has three hidden layers of width 256,
+    each followed by a ReLU activation, and a final Sigmoid layer to keep the predicted
+    RGB values within <code>[0, 1]</code>. The input dimensionality matches the encoded
+    coordinate size <code>(2 + 4L)</code>.
+  </p>
+
+  <h3>Coordinate & Color Sampling</h3>
+  <p>
+    Instead of constructing a separate dataloader class, I flattened the entire image
+    into coordinate and color tensors. At each iteration, I randomly sampled 10,000
+    pixel indices directly in PyTorch, producing a batch of (u, v) coordinates and their
+    corresponding RGB values. The coordinates were normalized to <code>[0, 1]</code>
+    using <code>u = x / (W - 1)</code> and <code>v = y / (H - 1)</code>.
+  </p>
+
+  <h3>Training Setup</h3>
+  <p>
+    I trained using the Adam optimizer with a learning rate of <code>1e-2</code> for
+    1000 iterations (default setting). At each iteration, I computed the MSE loss
+    between predicted and ground-truth RGB values. Every 100 iterations, I recorded the
+    current PSNR, and every 250 iterations I rendered and saved a full reconstruction of
+    the image. These reconstructions and the PSNR curve were generated using the helper
+    functions <code>render_full_image</code> and <code>save_reconstruction</code>.
+  </p>
+
+  <h3>Results</h3>
+  <p>
+    Training successfully converged, with PSNR steadily increasing throughout the
+    optimization. I saved intermediate reconstructions as well as the final
+    reconstruction, and I generated a PSNR-vs-iteration plot showing the improvement in
+    image quality over time. The PSNR peaked around iteration 600.
+  </p>
+
+  <!-- Add your intermediate reconstructions & PSNR curve images below -->
+  <div class="figure-grid two-columns">
+    <div class="figure">
+      <img src="images/fox_iter_0250.jpg" alt="Viser visualization 1" />
+      <div class="caption">Iteration 250</div>
+    </div>
+    <div class="figure">
+      <img src="images/fox_iter_0500.jpg" alt="Viser visualization 2" />
+      <div class="caption">Iteration 500</div>
+    </div>
+    <div class="figure">
+      <img src="images/fox_iter_0750.jpg" alt="Viser visualization 1" />
+      <div class="caption">Iteration 750</div>
+    </div>
+    <div class="figure">
+      <img src="images/fox_iter_1000.jpg" alt="Viser visualization 2" />
+      <div class="caption">Iteration 1000</div>
+    </div>
+    <div class="figure">
+      <img src="images/fox_iter_2000.jpg" alt="Viser visualization 1" />
+      <div class="caption">Iteration 2000</div>
+    </div>
+    <div class="figure">
+      <img src="images/fox_psnr_curve.jpg" alt="Viser visualization 2" />
+      <div class="caption">PSNR Curve</div>
+    </div>
+  </div>
+</section>
+
+
+<section id="part2">
+  <h2>Part 2: Fitting a Neural Radiance Field from Multi-View Images</h2>
+
+  <p>
+    I used the same NeRF implementation for both the Lego dataset and my own captured
+    dataset by simply switching the input <code>.npz</code> file. My pipeline includes
+    ray construction, ray sampling, positional encoding, a full NeRF MLP, volume
+    rendering, validation PSNR evaluation, intermediate visualizations, and novel-view
+    rendering.
+  </p>
+
+  <h3>2.1 Camera Rays</h3>
+  <p>
+    For each image, I converted pixel coordinates (with a +0.5 pixel offset) into camera
+    rays. I first inverted the intrinsic matrix to map pixel coordinates into camera
+    space, then applied the camera-to-world matrix to transform these points into world
+    coordinates. The camera origin was taken from the translation component of the c2w
+    matrix, and each ray direction was normalized. This produces one ray origin and
+    direction for every pixel in every training image.
+  </p>
+
+  <h3>2.2 Sampling Along Rays</h3>
+  <p>
+    I sampled 64 points uniformly between <code>near</code> and <code>far</code> for
+    each ray. During training I added per-interval perturbations to the sample
+    positions, as suggested in the NeRF paper, to avoid aliasing and improve
+    convergence. Each ray therefore produces a sequence of 3D sample points along its
+    path.
+  </p>
+
+  <h3>2.3 Ray Dataset</h3>
+  <p>
+    I precomputed all rays and corresponding RGB pixel values for every training image.
+    This includes flattening all rays into a single large tensor containing all ray
+    origins, directions, and ground-truth colors. A training batch is created by
+    randomly sampling a subset of these rays, which makes each iteration efficient and
+    avoids repeatedly recomputing rays.
+  </p>
+
+  <h3>2.4 NeRF Network</h3>
+  <p>
+    My NeRF MLP uses positional encoding with <code>L = 10</code> for 3D coordinates
+    and <code>L = 4</code> for view directions. The network includes:
+    a multi-layer block for position encoding, a skip connection that re-injects the
+    encoded coordinates mid-network, a density head predicting <code>σ</code> (via
+    ReLU), and a color head conditioned on the encoded view direction (with a final
+    Sigmoid). This matches the structure of the original NeRF model.
+  </p>
+
+  <h3>2.5 Volume Rendering</h3>
+  <p>
+    I implemented the standard NeRF volume-rendering equation. For each ray, I computed
+    alphas using <code>α = 1 − exp(−σ Δt)</code>, accumulated transmittance using a
+    cumulative product, and then used these weights to composite colors. My
+    implementation matches the staff-provided correctness test.
+  </p>
+
+  <h3>2.6 Training</h3>
+  <p>
+    I trained my NeRF using 7k randomly sampled rays per iteration, 64 samples per ray,
+    and an Adam optimizer with a learning rate of <code>1e-3</code> and exponential
+    learning-rate decay. Every 100 iterations I rendered a validation image (view 0)
+    and computed its PSNR. Intermediate training images were saved and compiled into a
+    GIF. The model successfully reached strong validation PSNR and reconstructed both
+    the Lego dataset and my own captured object.
+  </p>
+
+  <h3>2.7 Novel-View Rendering</h3>
+  <p>
+    After training, I rendered novel views using all test camera extrinsics. Each view
+    was rendered in chunks of 4096 rays to fit into GPU memory. I saved the resulting
+    frames and combined them into a rotating GIF of the scene. This worked for both the
+    Lego scene and my own scanned object by simply switching the dataset file.
+  </p>
+
+  <!-- You can insert figures: ray visualizations, training GIFs, PSNR curve, novel views -->
+</section>
+
+
+<footer>
+  <p>CS180/280A Project 4 – Neural Radiance Field</p>
+</footer>
+
+</body>
+</html>
