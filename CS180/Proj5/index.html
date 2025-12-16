@@ -14,14 +14,19 @@
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" defer></script>
 
 <header>
-  <h1>Neural Radiance Field (NeRF)</h1>
+  <h1>Fun with Diffusion Models</h1>
   <p>CS180/280A • Fall 2025</p>
 </header>
 
 <section id="overview">
   <h2>Overview</h2>
   <p>
-    In this project, I implement a complete Neural Radiance Field (NeRF) pipeline. I start by calibrating my own camera using ArUco tags, estimating camera poses, and packaging my images into a dataset suitable for NeRF training. I then train a 2D neural field (Part 1) followed by a full 3D NeRF (Part 2), and finally train a NeRF on my own scanned object (Part 2.6). This webpage documents my implementation choices, experiments, results, and visualizations.
+    In this project, I explored modern generative models through both diffusion and flow matching. 
+    In Part A, I worked with a pre-trained diffusion model to understand the denoising process, 
+    implement classifier-free guidance, and apply these ideas to real images, hand-drawn sketches, 
+    inpainting, and visual illusions. In Part B, I trained diffusion-style models from scratch on MNIST, 
+    starting with a basic denoising UNet and gradually extending it with time conditioning, flow matching, 
+    and class conditioning to enable iterative and controllable image generation.  
   </p>
 </section>
 
