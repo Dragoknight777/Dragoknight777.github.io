@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Project 5 – Fun with Diffusion Models</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="./style.css" />
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(','\\)'], ['$', '$']], displayMath: [['$$','$$'], ['\\[','\\]']] },
+      options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" defer></script>
+
+<header>
+  <h1>Neural Radiance Field (NeRF)</h1>
+  <p>CS180/280A • Fall 2025</p>
+</header>
+
+<section id="overview">
+  <h2>Overview</h2>
+  <p>
+    In this project, I implement a complete Neural Radiance Field (NeRF) pipeline. I start by calibrating my own camera using ArUco tags, estimating camera poses, and packaging my images into a dataset suitable for NeRF training. I then train a 2D neural field (Part 1) followed by a full 3D NeRF (Part 2), and finally train a NeRF on my own scanned object (Part 2.6). This webpage documents my implementation choices, experiments, results, and visualizations.
+  </p>
+</section>
+
+<section id="part-a">
+  <h1>Part A: The Power of Diffusion Models!</h1>
+
+  <p class="blurb">
+    In the first part of this project, I explored the capabilities of diffusion models, specifically using the DeepFloyd IF model. 
+    Diffusion models work by reversing a process that gradually adds noise to an image. My goal was to implement this "denoising" 
+    process manually, starting from simple loops and advancing to complex tasks like inpainting, optical illusions, and hybrid images.
+  </p>
+
+  <h2>0. Text-to-Image Generation</h2>
+  <p class="blurb">
+    I began by getting familiar with the DeepFloyd IF diffusion model. This model is a two-stage text-to-image system, 
+    but for this project, I focused on Stage 1, which generates 64x64 images. I experimented with different text prompts 
+    and the number of inference steps to see how the model turns text embeddings into visual content. Even with a pre-trained model,
+    the quality varies significantly based on the random seed and the number of steps used.
+  </p>
+
+  <div class="image-row">
+    <figure class="figure">
+      <img src="./images/Part0_1.png" alt="Text-to-image example 1">
+      <figcaption class="caption">Generated Images at 20 Inference Steps</figcaption>
+    </figure>
+    <figure class="figure">
+      <img src="./images/Part0_2.jpg" alt="Text-to-image example 1">
+      <figcaption class="caption">Generated Images at 50 Inference Steps</figcaption>
+    </figure>
+  </div>
+
+  <h2>1. The Forward Process</h2>
+  <p class="blurb">
+    I first implemented the "forward process." To demonstrate this process, I took an image of the Berkeley Campanile
+    and progressively adds Gaussian noise to it at different timesteps ($t$). 
+    As $t$ increases, the original image structure is gradually lost.
+    I implemented the equation
+    $$x_t = \sqrt{\overline{\alpha}_t}\,x_0 + \sqrt{1-\overline{\alpha}_t}\,\epsilon$$
+    to simulate this noisy progression.
+  </p>
+
+  <div class="image-row">
+    <figure class="figure">
+      <img src="./images/PartA_1.1.jpg" alt="Forward process Campanile">
+      <figcaption class="caption">The Campanile at noise levels t=250, t=500, and t=750.</figcaption>
+    </figure>
+  </div>
+
+  <h2>2. Classical Denoising</h2>
+  <p class="blurb">
+    Before using neural networks, I tried to remove the noise using classical Gaussian blurring. 
+    The logic was that blurring might smooth out the high-frequency Gaussian noise I added. 
+    However, as shown below, this method performs poorly. While it removes some grain, it fails to recover edges 
+    or details, especially at higher noise levels ($t=750$). This demonstrates why we need learned models for this task.
+  </p>
+
+  <div class="image-row">
+    <figure class="figure">
+      <img src="./images/PartA_1.2.jpg" alt="Gaussian blur results">
+      <figcaption class="caption">Attempting to denoise using Gaussian Blur at t=250, 500, 750.</figcaption>
+    </figure>
+  </div>
+
+  <h2>3. One-Step Denoising</h2>
+  <p class="blurb">
+    Next, I used the pre-trained DeepFloyd UNet to perform "one-step denoising." The UNet is trained to estimate the noise 
+    present in an image given the timestep $t$ and a text embedding. By predicting the noise and subtracting it from the noisy image, 
+    I obtained an estimate of the original image $x_0$. This works significantly better than Gaussian blurring, 
+    but it still struggles at high noise levels ($t=750$) because projecting pure noise back to a sharp image in a single step is incredibly difficult.
+  </p>
+
+  <div class="image-row">
+    <figure class="figure">
+      <img src="./images/PartA_1.3.jpg" alt="One-step denoise results">
+      <figcaption class="caption">One-step denoising using the UNet at t=250, 500, 750.</figcaption>
+    </figure>
+  </div>
+
+  <h2>4. Iterative Denoising</h2>
+  <p class="blurb">
+    Diffusion models are designed to be iterative. Instead of trying to recover the image in one shot, 
+    I implemented a sampling loop that removes a small amount of noise at a time. I used a "strided" schedule, 
+    skipping steps to make the process faster (e.g., jumping 30 steps at a time). This iterative approach allows the model 
+    to gradually hallucinate details and correct errors, resulting in a much sharper and more realistic final image compared 
+    to the one-step method.
+  </p>
+
+  <div class="image-row">
+    <figure class="figure">
+      <img src="./images/PartA_1.4.jpg" alt="Iterative denoising steps">
+      <figcaption class="caption">Progression of iterative denoising (every 5th step shown).</figcaption>
+    </figure>
+    <figure class="figure">
+      <img src="./images/PartA_1.4b.jpg" alt="Final iterative comparison">
+      <figcaption class="caption">Comparison: Original vs. Iteratively Denoised vs. One-Step vs. Gaussian Blur.</figcaption>
+    </figure>
+  </div>
+
+  <h2>5. Sampling from Pure Noise</h2>
+  <p class="blurb">
+    Since I now had a working iterative denoising loop, I could use it to generate completely new images from scratch. 
+    I started with pure Gaussian noise ($x_T$) and ran the loop all the way to $t=0$ using the prompt "a high quality photo." 
+    While the results are recognizable, they are somewhat dull or nonsensical because the unconditional generation lacks strong guidance.
+  </p>
+
+  <div class="image-row">
+    <figure>
+      <img src="./images/PartA_1.5.jpg" alt="Samples from pure noise">
+      <figcaption class="caption">5 samples generated from pure noise using the standard denoising loop.</figcaption>
+    </figure>
+  </div>
+
+  <h2>6. Classifier-Free Guidance (CFG)</h2>
+  <p class="blurb">
+    To improve the quality of the generated images, I implemented Classifier-Free Guidance (CFG). 
+    This technique computes two noise estimates: one conditioned on the text prompt ($\epsilon_c$) and one that is unconditional ($\epsilon_u$). 
+    By extrapolating the difference between them ($\epsilon = \epsilon_u + \gamma(\epsilon_c - \epsilon_u)$) with a scale $\gamma > 1$, 
+    the model is pushed strongly toward the prompt. As seen below, the images are much higher quality and more visually coherent.
+  </p>
+
+  <div class="image-row">
+    <figure>
+      <img src="./images/PartA_1.6.jpg" alt="CFG samples">
+      <figcaption class="caption">5 samples generated using Classifier-Free Guidance ($\gamma=7$).</figcaption>
+    </figure>
+  </div>
+
+  <h2>7. Image-to-Image Translation</h2>
+  <p class="blurb">
+    I applied classifier-free guidance to denoise both real images and hand-drawn images at different noise levels, 
+    using a text prompt to guide the reconstruction. By starting the denoising process from different timesteps, 
+    I could see how much structure from the original image was preserved versus how much was influenced by the 
+    prompt.
+  </p>
+
+  <h3>7.1 Editing Hand-Drawn and Web Images</h3>
+  <div class="image-row">
+    <figure class="figure">
+      <img src="./images/PartA_1.7.1a.jpg" alt="Campanile edits">
+      <figcaption class="caption">The Berkeley Axe at noise levels [1, 3, 5, 7, 10, 20].</figcaption>
+    </figure>
+    <figure class="figure">
+      <img src="./images/PartA_1.7.1b.jpg" alt="Web image edits">
+      <figcaption class="caption">Hand drawn person and house at various noise levels.</figcaption>
+    </figure>
+    <figure class="figure">
+      <img src="./images/PartA_1.7.1c.jpg" alt="Web image edits">
+      <figcaption class="caption">Hand drawn river and mountains at various noise levels.</figcaption>
+    </figure>
+  </div>
+
+  <h3>7.2 Inpainting</h3>
+  <p class="blurb">
+    I implemented inpainting to selectively edit parts of an image. I used a binary mask where 0 represents the area to keep 
+    and 1 represents the area to generate. During the denoising loop, I forced the pixels outside the mask 
+    to match the original image (plus appropriate noise), while allowing the pixels inside the mask to be generated by the model.
+    I used this to restore the top of the Campanile.
+  </p>
+  <div class="image-row">
+    <figure class="figure">
+      <img src="./images/PartA_1.7.2.jpg" alt="Inpainting result">
+      <figcaption class="caption">Original and Inpainted Campanile.</figcaption>
+    </figure>
+  </div>
+
+  <h3>7.3 Text-Conditional Image-to-Image Translation</h3>
+  <p class="blurb">
+    Finally, I combined SDEdit with specific text prompts. By guiding the denoising process with a prompt like "a rocket ship," 
+    I could transform the Campanile into a rocket while maintaining its general vertical shape. This shows how we can control the 
+    projection onto the image manifold using language.
+  </p>
+  <div class="image-row">
+    <figure class="figure">
+      <img src="./images/PartA_1.7.3.jpg" alt="Text conditional edits">
+      <figcaption class="caption">An oil painting of an old man transformed to a Campanile at varying timesteps.</figcaption>
+    </figure>
+  </div>
+
+  <h2>8. Visual Anagrams</h2>
+  <p class="blurb">
+    I created optical illusions called "Visual Anagrams." These are images that look like one thing when upright 
+    and something else when flipped upside down. I achieved this by modifying the denoising step: I averaged the noise estimate 
+    for prompt A (upright) and the flipped noise estimate for prompt B (flipped). This forces the image to satisfy both prompts simultaneously.
+  </p>
+  <div class="image-row">
+    <figure class="figure">
+      <img src="./images/PartA_1.8a.jpg" alt="Visual Anagram 1">
+      <figcaption class="caption">"An oil painting of an old man" vs. "An oil painting of people around a campfire".</figcaption>
+    </figure>
+    <figure class="figure">
+      <img src="./images/PartA_1.8b.jpg" alt="Visual Anagram 2">
+      <figcaption class="caption">"A lithograph of waterfalls" vs. "A lithograph of a skull".</figcaption>
+    </figure>
+  </div>
+
+  <h2>9. Hybrid Images</h2>
+  <p class="blurb">
+    Similar to Project 2, I created Hybrid Images using Factorized Diffusion. I combined the low-frequency noise estimate 
+    of one prompt with the high-frequency noise estimate of another prompt. The result is an image that appears to be one thing
+    from a distance and another from up close.
+  </p>
+  <div class="image-row">
+    <figure class="figure">
+      <img src="./images/PartA_1.9.jpg" alt="Hybrid Image">
+      <figcaption class="caption">Rocket pencil.</figcaption>
+    </figure>
+    <figure class="figure">
+      <img src="./images/PartA_1.9b.jpg" alt="Hybrid Image">
+      <figcaption class="caption">Hybrid Image: A snowy mountain village along the Amalfi Coast.</figcaption>
+    </figure>
+  </div>
+
+</section>
+
+<section id="part-b">
+  <h1>Part B: Flow Matching from Scratch</h1>
+
+  <p class="blurb">
+    In this part, I trained diffusion-style generative models from scratch on MNIST. I first built and trained a single-step
+    denoising UNet, then extended it with time conditioning to enable iterative generation using flow matching. Finally, I added
+    class conditioning and classifier-free guidance to improve sample quality and controllability.
+  </p>
+
+  <!-- ===================== -->
+  <!-- 1.1 UNet Architecture -->
+  <!-- ===================== -->
+  <h2>1.1 Implementing the UNet</h2>
+  <p class="blurb">
+    I implemented an unconditional UNet consisting of symmetric downsampling and upsampling paths with skip connections. This
+    architecture serves as the backbone for all denoising and flow-matching experiments in the rest of Part B.
+  </p>
+
+  <figure class="figure figure-narrow">
+    <img src="./images/PartB_1.1.jpg" class="center-img" alt="Unconditional UNet architecture">
+    <figcaption class="caption">Architecture of the unconditional UNet used for single-step denoising and flow matching.</figcaption>
+  </figure>
+
+  <!-- ===================== -->
+  <!-- 1.2 Noising Process -->
+  <!-- ===================== -->
+  <h2>1.2 Visualizing the Noising Process</h2>
+  <p class="blurb">
+    Before training, I visualized the forward noising process by progressively adding Gaussian noise to the Campanile image. As the
+    noise level increases, the Campanile gradually degrades and eventually becomes unrecognizable.
+  </p>
+
+  <figure class="figure figure-narrow">
+    <img src="./images/PartB_1.2.jpg" class="center-img" alt="Noising process visualization">
+    <figcaption class="caption">Forward noising process on the Campanile for increasing noise levels.</figcaption>
+  </figure>
+
+  <!-- ===================== -->
+  <!-- 1.2.1 Training Denoiser -->
+  <!-- ===================== -->
+  <h2>1.2.1 Training a Single-Step Denoiser</h2>
+  <p class="blurb">
+    I trained the UNet as a single-step denoiser using an MSE loss, where noise is added on-the-fly during training. This
+    encourages the model to generalize across different noise realizations. After 5 training epochs the generated
+    samples looked mostly the same, maybe a bit sharper than the ones after 1 epoch.
+  </p>
+
+  <figure class="figure figure-narrow">
+    <img src="./images/PartB_1.2a.jpg" class="center-img" alt="Epoch 1 Results">
+    <figcaption class="caption">Denoising results on the test set after 1 training epoch (noise level &sigma; = 0.5).</figcaption>
+  </figure>
+
+  <figure class="figure figure-narrow">
+    <img src="./images/PartB_1.2b.jpg" class="center-img" alt="Epoch 5 Results">
+    <figcaption class="caption">Denoising results on the test set after 5 training epochs (noise level &sigma; = 0.5).</figcaption>
+  </figure>
+
+  <figure class="figure figure-narrow">
+    <img src="./images/PartB_1.2.1c.jpg" class="center-img" alt="Training loss curve">
+    <figcaption class="caption">Training loss curve for the single-step denoiser.</figcaption>
+  </figure>
+
+  <!-- ===================== -->
+  <!-- 1.2.2 OOD Noise -->
+  <!-- ===================== -->
+  <h2>1.2.2 Out-of-Distribution Noise Levels</h2>
+  <p class="blurb">
+    I evaluated the trained denoiser on noise levels it was not trained on. Performance degrades smoothly as the noise level moves
+    farther from the training distribution.
+  </p>
+
+  <figure class="figure figure-narrow">
+    <img src="./images/PartB_1.2.2.jpg" class="center-img" alt="OOD noise results">
+    <figcaption class="caption">Denoising results on the same test image under out-of-distribution noise levels.</figcaption>
+  </figure>
+
+  <!-- ===================== -->
+  <!-- 1.2.3 Pure Noise -->
+  <!-- ===================== -->
+  <h2>1.2.3 Denoising Pure Noise</h2>
+  <p class="blurb">
+    I retrained the denoiser to map pure Gaussian noise directly to MNIST digits. Because the model is trained with an MSE loss, the
+    outputs tend to resemble averaged digit prototypes rather than separate digits.
+  </p>
+
+  <figure class="figure figure-narrow">
+    <img src="./images/PartB_1.2.3.jpg" class="center-img" alt="Pure noise results">
+    <figcaption class="caption">Samples generated from pure noise after 1 epoch of training.</figcaption>
+  </figure>
+
+  <figure class="figure figure-narrow">
+    <img src="./images/PartB_1.2.3b.jpg" class="center-img" alt="Pure noise results (epoch 5)">
+    <figcaption class="caption">Samples generated from pure noise after 5 epochs of training.</figcaption>
+  </figure>
+
+  <figure class="figure figure-narrow">
+    <img src="./images/PartB_1.2.3c.jpg" class="center-img" alt="Pure noise loss curve">
+    <figcaption class="caption">Training loss curve when denoising pure Gaussian noise.</figcaption>
+  </figure>
+
+  <!-- ===================== -->
+  <!-- 2.1 Time Conditioning -->
+  <!-- ===================== -->
+  <h2>2.1 Adding Time Conditioning</h2>
+  <p class="blurb">
+    To enable iterative generation, I extended the UNet to accept a continuous time variable. Time embeddings are injected into
+    intermediate layers using fully connected blocks, allowing the model to adapt its predictions based on the current timestep.
+  </p>
+
+  <figure class="figure figure-narrow">
+    <img src="./images/PartB_2.1.jpg" class="center-img" alt="Time-conditioned UNet diagram">
+    <figcaption class="caption">Time-conditioned UNet architecture with scalar timestep embeddings.</figcaption>
+  </figure>
+
+  <!-- ===================== -->
+  <!-- 2.2 Training Flow Matching -->
+  <!-- ===================== -->
+  <h2>2.2 Training a Flow Matching Model</h2>
+  <p class="blurb">
+    I trained the time-conditioned UNet using the flow matching objective, where the model learns to predict the flow between noisy
+    and clean images at arbitrary timesteps.
+  </p>
+
+  <figure class="figure figure-narrow">
+    <img src="./images/PartB_2.2c.jpg" class="center-img" alt="Flow matching loss curve">
+    <figcaption class="caption">Training loss curve for the time-conditioned flow matching model.</figcaption>
+  </figure>
+
+  <!-- ===================== -->
+  <!-- 2.3 Sampling -->
+  <!-- ===================== -->
+  <h2>2.3 Sampling with Flow Matching</h2>
+  <p class="blurb">
+    Using the trained model, I generated samples by iteratively integrating the learned flow field from pure noise toward clean
+    images. Most of the generated samples from epoch 1 don't look like numbers, but by epoch 10 I can quite confidently
+    tell what each digit is. 
+  </p>
+
+  <figure class="figure figure-narrow">
+    <img src="./images/PartB_2.3.jpg" class="center-img" alt="Flow matching samples">
+    <figcaption class="caption">Samples generated using iterative flow matching after training.</figcaption>
+  </figure>
+
+  <!-- ===================== -->
+  <!-- 2.4 Class Conditioning -->
+  <!-- ===================== -->
+  <h2>2.4 Adding Class Conditioning</h2>
+  <p class="blurb">
+    I further extended the UNet to condition on digit class labels using one-hot embeddings. Class conditioning is combined with time
+    conditioning and classifier-free dropout.
+  </p>
+
+  <!-- ===================== -->
+  <!-- 2.5 Training Class-Conditional -->
+  <!-- ===================== -->
+  <h2>2.5 Training the Class-Conditional UNet</h2>
+  <p class="blurb">
+    The class-conditioned UNet was trained using the same flow matching objective, with periodic unconditional training to support
+    classifier-free guidance.
+  </p>
+
+  <figure class="figure figure-narrow">
+    <img src="./images/PartB_2.5.jpg" class="center-img" alt="Class-conditioned training loss">
+    <figcaption class="caption">Training loss curve for the class-conditioned flow matching model.</figcaption>
+  </figure>
+
+  <!-- ===================== -->
+  <!-- 2.6 Class-Conditional Sampling -->
+  <!-- ===================== -->
+  <h2>2.6 Class-Conditional Sampling with CFG</h2>
+  <p class="blurb">
+    Finally, I sampled images using classifier-free guidance with a guidance scale of 5.0. Conditioning on digit labels
+    significantly improves convergence speed and sample quality.
+  </p>
+
+  <figure class="figure figure-narrow">
+    <img src="./images/PartB_2.6.jpg" class="center-img" alt="Class-conditional samples">
+    <figcaption class="caption">Class-conditional samples generated using classifier-free guidance (&gamma; = 5.0).</figcaption>
+  </figure>
+</section>
+
+
+<footer>
+  <p>CS180/280A Project 5 – Fun With Diffusion Models</p>
+</footer>
+
+</body>
+</html>

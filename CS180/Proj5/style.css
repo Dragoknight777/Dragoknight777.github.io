@@ -1,0 +1,241 @@
+/* ----- Design tokens ----- */
+:root {
+  --bg: #ffffff;
+  --text: #111418;
+  --muted: #6b7280;
+  --card: #fafafa;
+  --border: #e6e6e6;
+  --accent: #2563eb;         /* tweak this for a different accent */
+  --accent-weak: #dbeafe;
+  --code-bg: #0b1021;
+  --code-text: #e8eaf6;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
+  --shadow-md: 0 6px 18px rgba(0,0,0,.08);
+  --shadow-lg: 0 10px 30px rgba(0,0,0,.12);
+}
+
+/* @media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b0f14;
+    --text: #e8eaed;
+    --muted: #9aa0a6;
+    --card: #11161d;
+    --border: #1f2a37;
+    --accent: #60a5fa;
+    --accent-weak: #1e3a8a;
+    --code-bg: #0a0f1c;
+    --code-text: #e8eaed;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.25);
+    --shadow-md: 0 8px 22px rgba(0,0,0,.35);
+    --shadow-lg: 0 14px 40px rgba(0,0,0,.45);
+  }
+} */
+
+/* ----- Layout & typography ----- */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 28px auto;
+  max-width: 1100px;
+  padding: 0 18px 60px;
+  background: var(--bg);
+  color: var(--text);
+  font: 400 16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+h1, h2, h3 { line-height: 1.25; margin: 0 0 10px; }
+h1 { font-size: clamp(28px, 3.2vw, 40px); letter-spacing: -0.02em; }
+h2 { margin-top: 40px; padding-top: 14px; border-top: 1px solid var(--border); font-size: clamp(22px, 2.2vw, 28px); }
+h3 { margin-top: 22px; font-size: clamp(18px, 1.8vw, 22px); }
+
+p { margin: 10px 0 14px; color: var(--text); }
+small, .muted { color: var(--muted); }
+
+/* ----- Header hero ----- */
+header {
+  margin-bottom: 24px;
+  padding: 28px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(135deg, var(--accent-weak) 0%, transparent 45%),
+    var(--card);
+  box-shadow: var(--shadow-sm);
+}
+header h1 { margin-bottom: 6px; }
+header p { margin: 0; color: var(--muted); }
+
+/* ----- Figure grids / cards ----- */
+.figure-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 14px;
+}
+.figure-grid.two-columns { grid-template-columns: repeat(2, 1fr); }
+.figure-grid.three-columns { grid-template-columns: repeat(3, 1fr); }
+
+.figure {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  padding: 12px;
+  box-shadow: var(--shadow-sm);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.figure:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+.figure img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: calc(var(--radius-md) - 4px);
+}
+
+.caption {
+  margin-top: 8px;
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+
+/* Ensure all figure captions are centered (works for .figure and .figure-narrow) */
+.caption {
+  text-align: center;
+  display: block;
+}
+
+/* Side-by-side comparison utility (for Part B figures) */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 760px) {
+  .figure-grid.two-columns,
+  .compare { grid-template-columns: 1fr; }
+}
+
+/* ----- Code / notes ----- */
+.code {
+  background: var(--code-bg);
+  color: var(--code-text);
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255,255,255,.06);
+  box-shadow: var(--shadow-sm);
+  overflow: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .92rem;
+}
+
+.note {
+  background: color-mix(in oklab, var(--accent-weak) 30%, var(--bg));
+  border: 1px solid var(--border);
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+}
+
+/* Tight list helper */
+ul.tight > li { margin-bottom: 6px; }
+
+/* ----- Image helpers ----- */
+.img-full { width: 100%; height: auto; display: block; }
+.img-shadow { box-shadow: var(--shadow-md); border-radius: var(--radius-md); }
+
+/* Center images and only scale down images that are wider than their container.
+   Smaller images keep their intrinsic size and remain centered. */
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ----- Badges / pills for quick metrics ----- */
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--accent-weak);
+  color: var(--accent);
+  font-size: .8rem;
+  border: 1px solid color-mix(in oklab, var(--accent) 20%, var(--accent-weak));
+}
+
+/* ----- Tables (if you add runtime/param tables for Part B) ----- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0 16px;
+  font-size: .95rem;
+}
+th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+th { text-align: left; color: var(--muted); font-weight: 600; }
+tbody tr:hover { background: color-mix(in oklab, var(--card) 70%, var(--bg)); }
+
+/* ----- Footer ----- */
+footer { margin-top: 48px; color: var(--muted); font-size: .92rem; }
+
+/* ----- Print ----- */
+@media print {
+  body { max-width: none; padding: 0 8mm; }
+  header, .figure, .code { box-shadow: none; }
+  a { text-decoration: underline; }
+}
+
+/* Inline equation styling (lightweight, no MathJax required) */
+.eq {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .94em;
+  padding: 0 .35em;
+  border-radius: 6px;
+  background: color-mix(in oklab, var(--card) 85%, var(--bg));
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+/* Tighter top spacing under section headings when an intro paragraph follows */
+#b1 > p:first-of-type {
+  margin-top: 8px;
+}
+
+/* Vertical figure stack for B.2 descriptor grids */
+.figure-vertical {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  margin-top: 14px;
+}
+
+#b2 .eq {
+  display: block;
+  text-align: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.95rem;
+  margin: 10px auto;
+}
+
+/* Narrow, centered figure for single wide images (used in B.3) */
+.figure-narrow {
+  max-width: 960px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.figure-wide {
+  max-width: 1200px;      /* increase if your mosaic is larger */
+  margin-left: auto;
+  margin-right: auto;
+}
